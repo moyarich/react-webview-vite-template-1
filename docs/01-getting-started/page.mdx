@@ -5,102 +5,89 @@ label: Getting Started
 
 # Getting Started
 
-The repository is designed to run immediately after a normal npm install.
+The repository runs as one npm package with one VS Code extension host and multiple React webviews.
 
 ## Requirements
 
 You need:
 
-- Node.js compatible with the version required by Vite
+- Node.js compatible with Vite
 - npm
 - VS Code
 
 ## Install
 
-From the repository root:
-
 ```bash
 npm install
 ```
 
-There is one `package.json`, one lockfile, and one dependency installation.
-
-## Run with F5
-
-Open the repository in VS Code and press:
-
-```text
-F5
-```
-
-The checked-in launch configuration runs the root build first:
+## Build
 
 ```bash
 npm run build
 ```
 
-That produces:
+Expected output:
 
 ```text
 dist/
 ├── extension.js
-└── webview/
-    ├── webview.js
-    └── webview.css
+└── webviews/
+    ├── dashboard.js
+    ├── settings.js
+    ├── webview.css
+    └── chunks/
 ```
 
-The Extension Development Host then opens with the repository loaded as an extension.
+## Run with F5
 
-Open the Command Palette and run:
+Open the repository in VS Code and press `F5`.
+
+In the Extension Development Host, run either:
 
 ```text
-Open React Webview
+Open React Dashboard
+Open React Settings
 ```
 
-## Verify message passing
+Both commands use the same panel factory and shared webview infrastructure.
 
-Click:
+## Verify messaging
+
+Click **Send message to VS Code** in either webview.
+
+Expected sequence:
 
 ```text
-Send message to VS Code
+React webview
+→ shared postMessage wrapper
+→ extension host
+→ VS Code notification
+→ panel response
+→ React status update
 ```
-
-The expected sequence is:
-
-```text
-React button
-→ webview postMessage
-→ extension receives the message
-→ VS Code notification appears
-→ extension sends a response
-→ React updates its status
-```
-
-If that works, both sides of the extension are running correctly.
 
 ## Development mode
-
-To keep both builds running:
-
-```bash
-npm run watch
-```
-
-or:
 
 ```bash
 npm run dev
 ```
 
-For terminal-driven extension launching:
+This starts:
 
-```bash
-npm run build
-npm run dev:extension
+```text
+extension watcher
+webview watcher
+browser preview
+VS Code Extension Development Host
 ```
 
-If the VS Code CLI uses a different executable:
+The browser opens the Dashboard preview by default.
 
-```bash
-CODE_COMMAND=code-insiders npm run dev:extension
+Open the Settings preview at:
+
+```text
+/previews/settings.html
 ```
+
+The preview uses the browser shim for `acquireVsCodeApi()`.
