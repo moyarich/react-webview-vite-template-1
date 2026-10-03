@@ -105,7 +105,7 @@ npm run dev --workspace react-webview-vite-multi-webview
 
 ## Run repository-wide checks
 
-The root scripts run a named script across the template packages.
+The default root scripts use npm's native workspace support:
 
 ```bash
 npm run build
@@ -114,13 +114,48 @@ npm run lint
 npm test
 ```
 
-Instead of relying on `npm --workspaces --if-present`, the repository uses:
+For example:
+
+```json
+{
+  "build": "npm run build --workspaces --if-present",
+  "typecheck": "npm run typecheck --workspaces --if-present",
+  "lint": "npm run lint --workspaces --if-present",
+  "test": "npm test --workspaces --if-present"
+}
+```
+
+This is the shortest and most familiar way to run the same script across every workspace that defines it.
+
+### Rich workspace runner
+
+The repository also keeps:
 
 ```text
 scripts/run-workspaces.mjs
 ```
 
-The runner makes skipped and executed packages explicit.
+and exposes it as a package binary:
+
+```json
+{
+  "bin": {
+    "run-workspaces": "./scripts/run-workspaces.mjs"
+  }
+}
+```
+
+Use it when you want explicit per-package output:
+
+```bash
+npm run workspaces:run -- build
+```
+
+or, when the package binary is available on your PATH:
+
+```bash
+run-workspaces build
+```
 
 Example output:
 
@@ -128,20 +163,12 @@ Example output:
 RUN  multi-webview — npm run build
 PASS multi-webview
 
-RUN  separate-webview-ui — npm run build
-PASS separate-webview-ui
-
 SKIP scaffold — script "build" is not defined
-
-RUN  single-webview — npm run build
-PASS single-webview
 
 Workspace "build" complete: 3 ran, 1 skipped.
 ```
 
-If a package fails, the runner stops and returns that exit code.
-
-That makes repository-wide commands useful in local development and CI without hiding unsupported scripts.
+The CLI is useful for local diagnostics and CI logs because it reports `RUN`, `SKIP`, `PASS`, and `FAIL` explicitly.
 
 ## Template details
 
