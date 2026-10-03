@@ -1,0 +1,74 @@
+---
+title: Architecture
+label: Architecture
+---
+
+# Architecture
+
+This template keeps the VS Code extension and webview UI in separate package directories.
+
+## Root extension package
+
+The repository root contains the extension host:
+
+```text
+package.json
+vite.extension.config.ts
+tsconfig.json
+src/extension.ts
+```
+
+It runs in Node.js inside the VS Code extension host and can use the `vscode` module.
+
+## Nested webview package
+
+The browser application lives under:
+
+```text
+webview-ui/
+```
+
+It has its own:
+
+- `package.json`
+- lockfile
+- Vite config
+- TypeScript configs
+- React source
+
+This package runs in a browser context and cannot import the `vscode` module directly.
+
+## Runtime boundary
+
+```text
+Root extension
+    │
+    │ panel.webview.onDidReceiveMessage(...)
+    │
+    ▼
+VS Code APIs
+
+React webview
+    │
+    │ acquireVsCodeApi().postMessage(...)
+    │
+    ▼
+Extension host
+```
+
+The package separation makes this runtime separation visible in the filesystem.
+
+## Build outputs
+
+```text
+dist/
+└── extension.js
+
+webview-ui/dist/
+├── index.html
+└── assets/
+    ├── index.js
+    └── index.css
+```
+
+The extension references the built browser assets through `webview.asWebviewUri(...)`.
