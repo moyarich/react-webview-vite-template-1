@@ -1133,37 +1133,42 @@ If you see both, communication works in both directions.
 
 ## 24. Development workflow
 
-While developing, start both Vite watchers:
+Run:
 
 ```bash
 npm run dev
 ```
 
-This keeps these files updated:
+This starts the development processes and opens the React UI in a normal browser automatically.
+
+### Browser preview
+
+The browser preview runs through Vite and uses the preview shim instead of the real VS Code webview API.
+
+That means this interaction works in the browser:
 
 ```text
-src/extension.ts
-    ↓
-dist/extension.js
-
-src/webview/*
-    ↓
-dist/webview/webview.js
-dist/webview/webview.css
+React button
+→ preview shim
+→ simulated messageShown event
+→ React status update
 ```
 
-### When React changes
+The browser preview is useful for fast UI work because you can edit React and see changes without reopening a VS Code webview.
 
-Close the webview panel and run **Open React Webview** again.
+### VS Code webview
 
-### When extension code changes
+Inside the Extension Development Host, the exact same React code uses the real `acquireVsCodeApi()` implementation.
 
-Reload the Extension Development Host:
+```text
+React button
+→ acquireVsCodeApi().postMessage(...)
+→ extension host
+→ VS Code API
+→ panel.webview.postMessage(...)
+→ React status update
+```
 
-- macOS: `Cmd + R`
-- Windows/Linux: `Ctrl + R`
-
-Then reopen the webview.
 
 ---
 
