@@ -35,10 +35,16 @@ export default function App() {
           onClick={() => {
             setStatus("Sending message to VS Code...");
 
-            postMessage({
+            const sent = postMessage({
               type: "showMessage",
               message: "Hello from the React webview!",
             });
+
+            if (!sent) {
+              setStatus(
+                "VS Code API unavailable. Open this UI from the extension webview.",
+              );
+            }
           }}
         >
           Send message to VS Code
