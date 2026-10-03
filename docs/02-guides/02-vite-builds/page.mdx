@@ -1,0 +1,88 @@
+---
+title: Vite Builds
+label: Vite Builds
+---
+
+# Vite Builds
+
+The extension and webview use separate Vite configs because they target different runtimes.
+
+## Extension Vite config
+
+The root file:
+
+```text
+vite.extension.config.ts
+```
+
+builds:
+
+```text
+src/extension.ts
+→ dist/extension.js
+```
+
+Important settings:
+
+- target Node.js
+- emit CommonJS
+- keep `vscode` external
+- write a predictable `extension.js`
+
+A simplified configuration:
+
+```ts
+build: {
+  ssr: "src/extension.ts",
+  target: "node22",
+  outDir: "dist",
+  rollupOptions: {
+    external: ["vscode"],
+    output: {
+      format: "cjs",
+      entryFileNames: "extension.js",
+    },
+  },
+}
+```
+
+## Webview Vite config
+
+The nested file:
+
+```text
+webview-ui/vite.config.ts
+```
+
+builds the React browser app:
+
+```text
+webview-ui/src/*
+→ webview-ui/dist/*
+```
+
+The config uses:
+
+```ts
+plugins: [react(), tailwindcss()]
+```
+
+and predictable output names:
+
+```ts
+entryFileNames: "assets/[name].js"
+assetFileNames: "assets/[name].[ext]"
+```
+
+That gives the extension stable paths:
+
+```text
+webview-ui/dist/assets/index.js
+webview-ui/dist/assets/index.css
+```
+
+## Why not one Vite config?
+
+The root extension and nested webview are independent packages with different dependency graphs and runtime requirements.
+
+Keeping separate configs makes that boundary explicit.
