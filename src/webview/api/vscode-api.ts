@@ -3,28 +3,62 @@ export type WebviewMessage = {
   message: string;
 };
 
+function createPreviewVsCodeApi(): VSCodeApi {
+  let state: unknown;
+
+  return {
+    postMessage(message) {
+      console.info("[VS Code preview] postMessage", message);
+
+      if (
+        typeof message === "object" &&
+        message !== null &&
+        "type" in message &&
+        message.type === "showMessage"
+      ) {
+        window.dispatchEvent(
+          new MessageEvent("message", {
+            data: {
+              type: "messageShown",
+              message: "Preview shim received the message.",
+            },
+          }),
+        );
+      }
+    },
+    getState<T>() {
+      return state as T | undefined;
+    },
+    setState<T>(nextState: T) {
+      state = nextState;
+      return nextState;
+    },
+  };
+}
+
 let vscodeApi: VSCodeApi | undefined;
 
-function getVsCodeApi() {
+export function getVsCodeApi() {
   if (vscodeApi) {
     return vscodeApi;
   }
 
-  if (typeof acquireVsCodeApi !== "function") {
-    return undefined;
-  }
+  vscodeApi =
+    typeof acquireVsCodeApi === "function"
+      ? acquireVsCodeApi()
+      : createPreviewVsCodeApi();
 
-  vscodeApi = acquireVsCodeApi();
   return vscodeApi;
 }
 
 export function postMessage(message: WebviewMessage) {
-  const vscode = getVsCodeApi();
+  getVsCodeApi().postMessage(message);
+}
 
-  if (!vscode) {
-    return false;
-  }
+export function getVsCodeState<T>() {
+  return getVsCodeApi().getState<T>();
+}
 
-  vscode.postMessage(message);
-  return true;
+export function setVsCodeState<T>(state: T) {
+  return getVsCodeApi().setState(state);
 }
