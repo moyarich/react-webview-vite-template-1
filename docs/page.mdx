@@ -1,0 +1,41 @@
+---
+title: Monorepo Developer Notes
+label: Overview
+---
+
+# Monorepo Developer Notes
+
+These notes are for maintainers working on the repository structure and shared tooling.
+
+Student-facing material lives in:
+
+```text
+README.md
+packages/*/README.md
+```
+
+Developer and maintainer notes live in:
+
+```text
+docs/*
+packages/*/docs/*
+```
+
+## Repository model
+
+```text
+repository root
+├── package.json
+├── scripts/
+│   └── run-workspaces.mjs
+├── docs/
+└── packages/
+    ├── single-webview/
+    ├── separate-webview-ui/
+    ├── multi-webview/
+    └── scaffold/
+```
+
+The root owns workspace orchestration.
+
+Each package owns its implementation, student tutorial, and package-specific developer notes.
