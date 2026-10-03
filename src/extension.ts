@@ -31,7 +31,7 @@ export function activate(context: vscode.ExtensionContext) {
           return;
         }
 
-        await vscode.window.showInformationMessage(message.message);
+        void vscode.window.showInformationMessage(message.message);
 
         await panel.webview.postMessage({
           type: "messageShown",
