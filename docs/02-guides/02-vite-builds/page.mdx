@@ -5,92 +5,53 @@ label: Vite Builds
 
 # Vite Builds
 
-The project uses Vite for both runtimes, but each runtime needs a different configuration.
+The extension and webviews target different runtimes, so they use separate Vite configurations.
 
-## Extension configuration
+## Extension build
 
-`vite.extension.config.ts` builds the VS Code extension host.
+`vite.extension.config.ts` builds:
 
-Important ideas:
+```text
+src/extension.ts
+→ dist/extension.js
+```
 
-- entry: `src/extension.ts`
-- target: Node
-- output: CommonJS
-- external module: `vscode`
-- output file: `dist/extension.js`
+The `vscode` module remains external because VS Code provides it at runtime.
 
-The `vscode` module stays external because VS Code provides it at runtime.
+## Multi-entry webview build
 
-A simplified configuration looks like:
+`vite.webview.config.ts` uses one Vite build with multiple browser entries:
 
 ```ts
-build: {
-  ssr: "src/extension.ts",
-  target: "node22",
-  outDir: "dist",
-  rollupOptions: {
-    external: ["vscode"],
-    output: {
-      format: "cjs",
-      entryFileNames: "extension.js",
-    },
+rollupOptions: {
+  input: {
+    dashboard: "src/webviews/dashboard/index.tsx",
+    settings: "src/webviews/settings/index.tsx",
   },
 }
 ```
 
-## Webview configuration
+Output:
 
-`vite.webview.config.ts` builds the browser UI.
-
-Important ideas:
-
-- entry: `src/webview/index.tsx`
-- plugins: React and Tailwind
-- output: `dist/webview`
-- predictable JS name: `webview.js`
-- predictable CSS name: `webview.css`
-- IIFE output
-- inline dynamic imports
-
-A predictable output path keeps the extension HTML simple:
-
-```ts
-const scriptUri = webview.asWebviewUri(
-  vscode.Uri.joinPath(webviewRoot, "webview.js"),
-);
+```text
+dist/webviews/
+├── dashboard.js
+├── settings.js
+├── webview.css
+└── chunks/
+    └── shared-*.js
 ```
 
-## Why two configs?
+Each panel loads its own entry bundle while Vite can extract common React and shared UI code into chunks.
 
-The runtime requirements are different:
+## Why one webview build?
 
-| Extension host | Webview |
-| --- | --- |
-| Node.js | Browser |
-| CommonJS output | Browser bundle |
-| `vscode` external | React bundled |
-| No DOM | DOM available |
+The webviews are related screens in one extension.
 
-One build tool is useful. One build configuration would hide important runtime differences.
+A single multi-entry build lets them share dependencies and infrastructure without creating a separate npm application for each view.
 
 ## TypeScript boundaries
 
-The project also uses two TypeScript configurations.
+The root `tsconfig.json` excludes `src/webviews/**`.
 
-The root `tsconfig.json` handles extension-host code and excludes `src/webview/**`.
-
-`tsconfig.webview.json` includes browser libraries and JSX:
-
-```json
-{
-  "lib": ["ES2022", "DOM"],
-  "jsx": "react-jsx",
-  "moduleResolution": "bundler"
-}
-```
-
-Run both checks with:
-
-```bash
-npm run typecheck
-```
+`tsconfig.webview.json` includes browser libraries, JSX, the webview sources, and the runtime-neutral message contracts in `src/shared/**`.
