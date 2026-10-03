@@ -50,9 +50,11 @@ src/
 └── webviews/
     ├── dashboard/
     │   ├── App.tsx
+    │   ├── dashboard.css
     │   └── index.tsx
     ├── settings/
     │   ├── App.tsx
+    │   ├── settings.css
     │   └── index.tsx
     └── shared/
         ├── api/
@@ -61,7 +63,8 @@ src/
         │   ├── vscode-ui.tsx
         │   └── WebviewExample.tsx
         ├── styles/
-        │   └── index.css
+        │   ├── base.css
+        │   └── tokens.css
         └── vscode.d.ts
 ```
 
@@ -162,6 +165,45 @@ Instead, shared CSS defines private tokens with browser defaults:
 Components only depend on `--webview-*` variables.
 
 That gives browser previews stable defaults while VS Code themes override them automatically inside a real webview.
+
+## Shared and webview-specific CSS
+
+Each webview composes the style layers it needs.
+
+Shared styles live under:
+
+```text
+src/webviews/shared/styles/
+├── tokens.css
+└── base.css
+```
+
+`tokens.css` owns the private `--webview-*` theme variables.
+
+`base.css` imports Tailwind and the shared tokens, then defines common document styles.
+
+A webview can add its own stylesheet beside its React entry:
+
+```text
+src/webviews/dashboard/dashboard.css
+src/webviews/settings/settings.css
+```
+
+Dashboard composes both layers explicitly:
+
+```tsx
+import "../shared/styles/base.css";
+import "./dashboard.css";
+```
+
+Settings does the same with its own local stylesheet:
+
+```tsx
+import "../shared/styles/base.css";
+import "./settings.css";
+```
+
+A webview can use only shared CSS, shared plus local CSS, or introduce additional shared style modules as the extension grows.
 
 ## Browser previews
 
