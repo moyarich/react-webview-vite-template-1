@@ -542,40 +542,17 @@ React
 
 ## Development workflow
 
-To watch both runtimes:
-
-```bash
-npm run watch
-```
-
-or:
+During development, run both Vite builds in watch mode:
 
 ```bash
 npm run dev
 ```
 
-That runs both Vite builds side by side.
+Then press `F5` to launch the Extension Development Host.
 
-For extension debugging, `F5` is still the simplest workflow.
+When you change the React webview, close and reopen the panel to load the latest bundle.
 
-If you prefer launching from the terminal:
-
-```bash
-npm run build
-npm run dev:extension
-```
-
-The helper launches:
-
-```bash
-code --extensionDevelopmentPath=...
-```
-
-If you use VS Code Insiders:
-
-```bash
-CODE_COMMAND=code-insiders npm run dev:extension
-```
+When you change extension-host code, reload the Extension Development Host.
 
 ---
 
@@ -593,34 +570,6 @@ The important pieces are:
 
 Once those pieces are in place, you can add richer behavior without changing the fundamental model.
 
----
-
-## Full documentation
-
-The repository also includes MoyaForge-compatible reference docs:
-
-```text
-docs/
-├── page.mdx
-├── 01-getting-started/
-│   └── page.mdx
-├── 02-guides/
-│   ├── 01-architecture/
-│   │   └── page.mdx
-│   ├── 02-vite-builds/
-│   │   └── page.mdx
-│   ├── 03-webview-messaging/
-│   │   └── page.mdx
-│   └── 04-vscode-themed-components/
-│       └── page.mdx
-└── 03-reference/
-    ├── 01-scripts/
-    │   └── page.mdx
-    └── 02-troubleshooting/
-        └── page.mdx
-```
-
-The README stays focused as a blog post, while the `docs/` directory contains the deeper implementation and reference material.
 
 ---
 
