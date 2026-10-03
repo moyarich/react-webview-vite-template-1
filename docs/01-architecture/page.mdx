@@ -1,0 +1,53 @@
+---
+title: Monorepo Architecture
+label: Architecture
+---
+
+# Monorepo Architecture
+
+The repository is organized as an npm workspace:
+
+```json
+{
+  "workspaces": ["packages/*"]
+}
+```
+
+The root is not itself a VS Code extension template.
+
+It exists to provide:
+
+- workspace discovery
+- repository-wide scripts
+- shared developer tooling
+- documentation for maintainers
+
+## Packages
+
+```text
+packages/
+├── single-webview/
+├── separate-webview-ui/
+├── multi-webview/
+└── scaffold/
+```
+
+Package names describe architecture rather than branch history.
+
+## Documentation ownership
+
+```text
+README.md
+→ student landing page
+
+packages/*/README.md
+→ student tutorials
+
+docs/*
+→ monorepo developer notes
+
+packages/*/docs/*
+→ package-specific developer notes
+```
+
+Do not move maintainer implementation details into the student learning path unless they directly help explain the example.
