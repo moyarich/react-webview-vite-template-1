@@ -98,7 +98,7 @@ The extension contributes one command:
 react-webview-vite.openPanel
 ```
 
-It is available from the Command Palette and from an editor context-menu submenu:
+It is available from the Command Palette, from the editor context menu, and from the Explorer file context menu:
 
 ```text
 React Webview
@@ -123,6 +123,11 @@ The submenu itself receives the command through a menu whose ID matches the subm
         "submenu": "react-webview-vite.webviewMenu"
       }
     ],
+    "explorer/context": [
+      {
+        "submenu": "react-webview-vite.webviewMenu"
+      }
+    ],
     "react-webview-vite.webviewMenu": [
       {
         "command": "react-webview-vite.openPanel"
@@ -131,3 +136,18 @@ The submenu itself receives the command through a menu whose ID matches the subm
   }
 }
 ```
+
+
+### Editor vs Explorer context menus
+
+VS Code uses different menu contribution points depending on where the user right-clicks:
+
+```text
+Right-click inside an open editor
+→ editor/context
+
+Right-click a file in the Explorer sidebar
+→ explorer/context
+```
+
+If a command should appear in both places, contribute the submenu to both menu IDs.
