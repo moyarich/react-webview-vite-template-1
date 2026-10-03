@@ -7,20 +7,20 @@ label: Scripts
 
 All commands run from the repository root.
 
-## Build
+## Build everything
 
 ```bash
 npm run build
 ```
 
-Runs both Vite builds:
+Runs:
 
 ```text
-vite.extension.config.ts
-vite.webview.config.ts
+build:extension
+build:webview
 ```
 
-## Build only the extension
+## Extension build
 
 ```bash
 npm run build:extension
@@ -32,7 +32,7 @@ Produces:
 dist/extension.js
 ```
 
-## Build only the webview
+## Multi-webview build
 
 ```bash
 npm run build:webview
@@ -41,8 +41,11 @@ npm run build:webview
 Produces:
 
 ```text
-dist/webview/webview.js
-dist/webview/webview.css
+dist/webviews/
+├── dashboard.js
+├── settings.js
+├── webview.css
+└── chunks/
 ```
 
 ## Watch both runtimes
@@ -51,32 +54,48 @@ dist/webview/webview.css
 npm run watch
 ```
 
-Runs both watch processes with `concurrently`.
+Starts the extension and webview build watchers.
 
-## Watch one runtime
-
-```bash
-npm run watch:extension
-npm run watch:webview
-```
-
-## Development alias
+## Full development environment
 
 ```bash
 npm run dev
 ```
 
-Currently aliases `npm run watch`.
+Starts:
 
-## Launch VS Code from the terminal
+```text
+watch:extension
+watch:webview
+dev:preview
+dev:extension
+```
+
+## Browser preview only
+
+```bash
+npm run dev:preview
+```
+
+Vite opens:
+
+```text
+/previews/dashboard.html
+```
+
+You can also navigate to:
+
+```text
+/previews/settings.html
+```
+
+## Extension Development Host only
 
 ```bash
 npm run dev:extension
 ```
 
-This runs `scripts/run-extension-dev.mjs`.
-
-Override the VS Code CLI executable with:
+Override the VS Code CLI if needed:
 
 ```bash
 CODE_COMMAND=code-insiders npm run dev:extension
@@ -88,29 +107,10 @@ CODE_COMMAND=code-insiders npm run dev:extension
 npm run typecheck
 ```
 
-Checks both extension-host and webview TypeScript configurations.
+Checks the Node extension and browser webviews with their separate TypeScript configurations.
 
 ## Lint
 
 ```bash
 npm run lint
-```
-
-
-## Preview
-
-```bash
-npm run dev
-```
-
-The development command starts a Vite preview for the React webview automatically.
-
-The browser uses the preview shim for `acquireVsCodeApi()`.
-
-The VS Code-hosted webview continues to use the real API.
-
-Run only the preview with:
-
-```bash
-npm run dev:preview
 ```
