@@ -17,7 +17,27 @@
         "command": "react-webview-vite.openPanel",
         "title": "Open React Webview"
       }
-    ]
+    ],
+    "submenus": [
+      {
+        "id": "react-webview-vite.webviewMenu",
+        "label": "React Webview"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ],
+      "react-webview-vite.webviewMenu": [
+        {
+          "command": "react-webview-vite.openPanel",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "vscode:prepublish": "npm run build",
