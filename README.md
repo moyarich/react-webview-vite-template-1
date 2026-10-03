@@ -598,11 +598,11 @@ We will add the extension side next.
 
 ---
 
-## 13. Add the command to VS Code
+## 13. Add the command and submenu to VS Code
 
 VS Code commands must be declared in the extension's root `package.json`.
 
-Add:
+First add the command:
 
 ```json
 {
@@ -624,6 +624,55 @@ react-webview-vite.openPanel
 ```
 
 We will use the exact same ID when registering the command in TypeScript.
+
+Declaring the command makes it available from the Command Palette. We can also expose it through a menu.
+
+Add a submenu:
+
+```json
+{
+  "contributes": {
+    "submenus": [
+      {
+        "id": "react-webview-vite.webviewMenu",
+        "label": "React Webview"
+      }
+    ]
+  }
+}
+```
+
+Then add the submenu to the editor context menu and put the command inside it:
+
+```json
+{
+  "contributes": {
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ],
+      "react-webview-vite.webviewMenu": [
+        {
+          "command": "react-webview-vite.openPanel",
+          "group": "navigation"
+        }
+      ]
+    }
+  }
+}
+```
+
+Now a user can right-click inside an editor and choose:
+
+```text
+React Webview
+└── Open React Webview
+```
+
+The command remains available in the Command Palette too.
 
 ---
 
