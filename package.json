@@ -1,7 +1,7 @@
 {
   "name": "react-webview-vite",
   "displayName": "React Webview Vite Template",
-  "description": "A minimal VS Code webview example using React, Vite, Tailwind CSS, and VS Code theme variables.",
+  "description": "A VS Code extension template for multiple React, Vite, and Tailwind CSS webviews with shared UI, theme, and messaging infrastructure.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.118.0"
@@ -14,14 +14,18 @@
   "contributes": {
     "commands": [
       {
-        "command": "react-webview-vite.openPanel",
-        "title": "Open React Webview"
+        "command": "react-webview-vite.openDashboard",
+        "title": "Open React Dashboard"
+      },
+      {
+        "command": "react-webview-vite.openSettings",
+        "title": "Open React Settings"
       }
     ],
     "submenus": [
       {
         "id": "react-webview-vite.webviewMenu",
-        "label": "React Webview"
+        "label": "React Webviews"
       }
     ],
     "menus": {
@@ -31,16 +35,20 @@
           "group": "navigation"
         }
       ],
-      "react-webview-vite.webviewMenu": [
-        {
-          "command": "react-webview-vite.openPanel",
-          "group": "navigation"
-        }
-      ],
       "explorer/context": [
         {
           "submenu": "react-webview-vite.webviewMenu",
           "group": "navigation"
+        }
+      ],
+      "react-webview-vite.webviewMenu": [
+        {
+          "command": "react-webview-vite.openDashboard",
+          "group": "navigation@1"
+        },
+        {
+          "command": "react-webview-vite.openSettings",
+          "group": "navigation@2"
         }
       ]
     }
@@ -54,7 +62,7 @@
     "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
     "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts",
     "dev": "concurrently -k -n extension,webview,preview,vscode \"npm run watch:extension\" \"npm run watch:webview\" \"npm run dev:preview\" \"npm run dev:extension\"",
-    "dev:preview": "vite --config vite.webview.config.ts --host 127.0.0.1 --open /webview-preview.html",
+    "dev:preview": "vite --config vite.webview.config.ts --host 127.0.0.1 --open /previews/dashboard.html",
     "dev:extension": "node ./scripts/run-extension-dev.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.webview.json",
     "lint": "eslint src"
