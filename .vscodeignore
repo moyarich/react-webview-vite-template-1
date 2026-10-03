@@ -1,11 +1,13 @@
 .vscode/**
 .vscode-test/**
 src/**
+webview-ui/src/**
+webview-ui/public/**
+webview-ui/index.html
 .gitignore
-.yarnrc
 vsc-extension-quickstart.md
-**/tsconfig.json
+tsconfig*.json
+vite.*.config.ts
 **/eslint.config.mjs
 **/*.map
 **/*.ts
-**/.vscode-test.*
