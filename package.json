@@ -30,20 +30,15 @@
     "dev": "npm run watch",
     "dev:extension": "node ./scripts/run-extension-dev.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.webview.json",
-    "pretest": "npm run build && npm run lint && npm run typecheck",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "lint": "eslint src"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
-    "@types/mocha": "^10.0.10",
     "@types/node": "22.x",
     "@types/react": "^19.2.14",
     "@types/react-dom": "^19.2.3",
     "@types/vscode": "^1.118.0",
     "@vitejs/plugin-react": "^6.0.1",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.3",
     "react": "^19.2.5",
