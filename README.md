@@ -114,8 +114,6 @@ react-webview-vite-template-1/
 │   └── run-extension-dev.mjs
 └── src/
     ├── extension.ts
-    ├── test/
-    │   └── extension.test.ts
     └── webview/
         ├── App.tsx
         ├── index.tsx
@@ -736,8 +734,6 @@ Useful next steps for a real extension include:
 - routing
 - multiple webview views
 - richer component primitives
-- webview unit tests
-- extension-host integration tests
 
 ## Minimal mental model
 
