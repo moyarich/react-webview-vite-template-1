@@ -6,7 +6,7 @@ export function VSCodeButton({
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded bg-[var(--vscode-button-background)] px-3 py-2 text-[var(--vscode-button-foreground)] hover:bg-[var(--vscode-button-hoverBackground)] ${className}`}
+      className={`rounded bg-[var(--webview-button-background)] px-3 py-2 text-[var(--webview-button-foreground)] hover:bg-[var(--webview-button-hover-background)] ${className}`}
       {...props}
     />
   );
@@ -14,7 +14,7 @@ export function VSCodeButton({
 
 export function VSCodeCard({ children }: { children: ReactNode }) {
   return (
-    <section className="max-w-xl rounded border border-[var(--vscode-panel-border)] p-5">
+    <section className="max-w-xl rounded border border-[var(--webview-panel-border)] p-5">
       {children}
     </section>
   );
