@@ -49,3 +49,42 @@ shared React components
 Dashboard and Settings should not duplicate buttons, cards, theme mappings, or accessibility behavior.
 
 A new webview can reuse the same shared components immediately.
+
+
+## CSS composition
+
+Shared theme and base styles are split into:
+
+```text
+src/webviews/shared/styles/
+├── tokens.css
+└── base.css
+```
+
+`tokens.css` defines the private theme variables.
+
+`base.css` imports Tailwind and the shared tokens, then applies common document styles.
+
+Each webview may also define local CSS:
+
+```text
+src/webviews/dashboard/dashboard.css
+src/webviews/settings/settings.css
+```
+
+The entry point chooses its style composition explicitly:
+
+```tsx
+import "../shared/styles/base.css";
+import "./dashboard.css";
+```
+
+This supports three patterns cleanly:
+
+```text
+shared only
+shared + local
+shared + additional shared modules + local
+```
+
+The important rule is that reusable components depend on the private `--webview-*` tokens, not directly on VS Code host variables.
