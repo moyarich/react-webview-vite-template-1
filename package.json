@@ -27,7 +27,7 @@
     "build:webview": "npm --prefix webview-ui run build",
     "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
     "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
-    "watch:webview": "npm --prefix webview-ui run build -- --watch",
+    "watch:webview": "npm --prefix webview-ui run build:watch",
     "dev": "npm run watch",
     "typecheck": "tsc --noEmit && npm --prefix webview-ui run typecheck",
     "lint": "eslint src && npm --prefix webview-ui run lint"
