@@ -1,7 +1,7 @@
 {
   "name": "react-webview-vite",
-  "displayName": "react-webview-vite",
-  "description": "webview",
+  "displayName": "React Webview Vite Template",
+  "description": "A minimal VS Code webview example using React, Vite, Tailwind CSS, and VS Code theme variables.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.118.0"
@@ -13,10 +13,6 @@
   "main": "./out/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "react-webview-vite.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "react-webview-vite.openPanel",
         "title": "Open React Webview"
