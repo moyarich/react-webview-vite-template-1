@@ -3,8 +3,16 @@ export type WebviewMessage = {
   message: string;
 };
 
-const vscode = acquireVsCodeApi();
+let vscodeApi: VSCodeApi | undefined;
+
+function getVsCodeApi() {
+  if (!vscodeApi) {
+    vscodeApi = acquireVsCodeApi();
+  }
+
+  return vscodeApi;
+}
 
 export function postMessage(message: WebviewMessage) {
-  vscode.postMessage(message);
+  getVsCodeApi().postMessage(message);
 }
