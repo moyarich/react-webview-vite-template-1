@@ -5,120 +5,62 @@ label: Webview Messaging
 
 # Webview Messaging
 
-The example intentionally uses one message in each direction.
+Multiple webviews use one shared message contract.
+
+## Shared contract
+
+`src/shared/messages.ts` defines both directions:
+
+```ts
+type WebviewToExtensionMessage = {
+  type: "showMessage";
+  source: "dashboard" | "settings";
+  message: string;
+};
+
+type ExtensionToWebviewMessage = {
+  type: "messageShown";
+  message: string;
+};
+```
+
+The `source` field lets the extension know which webview sent the message.
 
 ## React to extension
 
-VS Code provides `acquireVsCodeApi()` inside the webview.
-
-The project declares only the API it needs in `src/webview/vscode.d.ts`:
-
-```ts
-type VSCodeApi = {
-  postMessage: (message: unknown) => void;
-};
-
-declare function acquireVsCodeApi(): VSCodeApi;
-```
-
-The wrapper in `src/webview/api/vscode-api.ts` acquires the API once:
-
-```ts
-const vscode = acquireVsCodeApi();
-
-export function postMessage(message: WebviewMessage) {
-  vscode.postMessage(message);
-}
-```
-
-React sends:
+Every webview imports the same API wrapper:
 
 ```ts
 postMessage({
   type: "showMessage",
-  message: "Hello from the React webview!",
+  source: "dashboard",
+  message: "Hello from the dashboard webview!",
 });
 ```
-
-## Extension receives the message
-
-The extension listens with:
-
-```ts
-panel.webview.onDidReceiveMessage(async (message) => {
-  if (message.type !== "showMessage") {
-    return;
-  }
-
-  await vscode.window.showInformationMessage(message.message);
-});
-```
-
-The VS Code API call belongs here because this code runs in the extension host.
 
 ## Extension to React
 
-The extension replies:
+The reusable panel helper listens for messages and responds through the panel that sent them.
 
 ```ts
 await panel.webview.postMessage({
   type: "messageShown",
-  message: "VS Code received the message.",
+  message: `VS Code received the message from ${message.source}.`,
 });
 ```
 
-React listens with a browser message event:
+## Browser preview
 
-```ts
-useEffect(() => {
-  const handleMessage = (event: MessageEvent<ExtensionMessage>) => {
-    if (event.data.type === "messageShown") {
-      setStatus(event.data.message);
-    }
-  };
+`acquireVsCodeApi()` only exists inside VS Code.
 
-  window.addEventListener("message", handleMessage);
-  return () => window.removeEventListener("message", handleMessage);
-}, []);
+The shared wrapper falls back to a preview shim in a normal browser. The shim simulates the response event so Dashboard and Settings can both be exercised through Vite previews.
+
+The production message path remains:
+
+```text
+React webview
+→ acquireVsCodeApi().postMessage(...)
+→ extension host
+→ panel.webview.postMessage(...)
+→ React
 ```
-
-## When the project grows
-
-For a larger extension, move message types into a shared module so both runtimes import the same contract.
-
-The small tutorial keeps the types local so the basic flow stays visible.
-
-
-## Browser preview shim
-
-`acquireVsCodeApi()` is injected by VS Code and does not exist in an ordinary browser.
-
-The API wrapper therefore chooses between the real implementation and a browser-only preview shim:
-
-```ts
-vscodeApi =
-  typeof acquireVsCodeApi === "function"
-    ? acquireVsCodeApi()
-    : createPreviewVsCodeApi();
-```
-
-The preview implementation supports:
-
-- `postMessage(...)`
-- `getState()`
-- `setState(...)`
-
-For `showMessage`, the shim dispatches a synthetic browser `message` event:
-
-```ts
-window.dispatchEvent(
-  new MessageEvent("message", {
-    data: {
-      type: "messageShown",
-      message: "Preview shim received the message.",
-    },
-  }),
-);
-```
-
-This keeps React behavior testable in a browser while preserving the real extension-host message path inside VS Code.
