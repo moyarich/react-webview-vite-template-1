@@ -20,12 +20,15 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "postinstall": "npm ci --prefix webview-ui && npm run build:webview",
+    "vscode:prepublish": "npm run build",
+    "build": "npm run build:extension && npm run build:webview",
+    "build:extension": "tsc -p ./",
+    "build:webview": "npm --prefix webview-ui run build",
+    "watch:extension": "tsc -watch -p ./",
     "watch:webview": "npm --prefix webview-ui run build -- --watch",
-    "dev": "concurrently \"npm run watch\" \"npm run watch:webview\"",
-    "pretest": "npm run compile && npm run lint",
+    "dev": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
+    "pretest": "npm run build && npm run lint",
     "lint": "eslint src",
     "test": "vscode-test"
   },
