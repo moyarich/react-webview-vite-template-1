@@ -1,0 +1,98 @@
+---
+title: Scripts
+label: Scripts
+---
+
+# Scripts
+
+Most commands run from the repository root.
+
+## Install both packages
+
+```bash
+npm install
+```
+
+The root `postinstall` runs:
+
+```bash
+npm ci --prefix webview-ui
+```
+
+## Build everything
+
+```bash
+npm run build
+```
+
+Runs:
+
+```text
+build:extension
+build:webview
+```
+
+## Build only the extension
+
+```bash
+npm run build:extension
+```
+
+Produces:
+
+```text
+dist/extension.js
+```
+
+## Build only the webview
+
+```bash
+npm run build:webview
+```
+
+Runs the nested `webview-ui` build and produces:
+
+```text
+webview-ui/dist/assets/index.js
+webview-ui/dist/assets/index.css
+```
+
+## Watch both projects
+
+```bash
+npm run watch
+```
+
+or:
+
+```bash
+npm run dev
+```
+
+## Watch only the extension
+
+```bash
+npm run watch:extension
+```
+
+## Watch only the webview
+
+```bash
+npm run watch:webview
+```
+
+## Type checking
+
+```bash
+npm run typecheck
+```
+
+Checks the root extension and nested webview package.
+
+## Lint
+
+```bash
+npm run lint
+```
+
+Runs linting for both packages.
