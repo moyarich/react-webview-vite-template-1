@@ -1,0 +1,116 @@
+---
+title: Scripts
+label: Scripts
+---
+
+# Scripts
+
+All commands run from the repository root.
+
+## Build everything
+
+```bash
+npm run build
+```
+
+Runs:
+
+```text
+build:extension
+build:webview
+```
+
+## Extension build
+
+```bash
+npm run build:extension
+```
+
+Produces:
+
+```text
+dist/extension.js
+```
+
+## Multi-webview build
+
+```bash
+npm run build:webview
+```
+
+Produces:
+
+```text
+dist/webviews/
+├── dashboard.js
+├── settings.js
+├── webview.css
+└── chunks/
+```
+
+## Watch both runtimes
+
+```bash
+npm run watch
+```
+
+Starts the extension and webview build watchers.
+
+## Full development environment
+
+```bash
+npm run dev
+```
+
+Starts:
+
+```text
+watch:extension
+watch:webview
+dev:preview
+dev:extension
+```
+
+## Browser preview only
+
+```bash
+npm run dev:preview
+```
+
+Vite opens:
+
+```text
+/previews/dashboard.html
+```
+
+You can also navigate to:
+
+```text
+/previews/settings.html
+```
+
+## Extension Development Host only
+
+```bash
+npm run dev:extension
+```
+
+Override the VS Code CLI if needed:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev:extension
+```
+
+## Type checking
+
+```bash
+npm run typecheck
+```
+
+Checks the Node extension and browser webviews with their separate TypeScript configurations.
+
+## Lint
+
+```bash
+npm run lint
+```

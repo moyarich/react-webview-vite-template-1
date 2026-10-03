@@ -1,0 +1,61 @@
+---
+title: Architecture
+label: Architecture
+---
+
+# Architecture
+
+The extension has one Node.js runtime and multiple browser runtimes.
+
+```text
+Extension host
+├── dashboard webview
+└── settings webview
+```
+
+All webviews belong to the same extension and npm package.
+
+## Source layout
+
+```text
+src/
+├── extension.ts
+├── extension/
+│   └── webviews/
+│       └── openWebviewPanel.ts
+├── shared/
+│   └── messages.ts
+└── webviews/
+    ├── dashboard/
+    ├── settings/
+    └── shared/
+```
+
+`src/shared/messages.ts` contains contracts that are safe for both Node and browser runtimes.
+
+`src/webviews/shared/` contains browser-only infrastructure reused by every React webview.
+
+## Reusable panel factory
+
+Commands do not duplicate panel creation:
+
+```ts
+openWebviewPanel(context, "dashboard");
+openWebviewPanel(context, "settings");
+```
+
+The factory centralizes CSP, resource URIs, shared CSS, scripts, and message handling.
+
+## Command surface
+
+```text
+React Webviews
+├── Open React Dashboard
+└── Open React Settings
+```
+
+The submenu is contributed to both `editor/context` and `explorer/context`.
+
+## Scaling
+
+Adding another view should add a new entry folder and definition, not a new copy of the shared webview infrastructure.

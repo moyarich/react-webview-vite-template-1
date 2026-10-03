@@ -1,0 +1,116 @@
+---
+title: Scripts
+label: Scripts
+---
+
+# Scripts
+
+All commands run from the repository root.
+
+## Build
+
+```bash
+npm run build
+```
+
+Runs both Vite builds:
+
+```text
+vite.extension.config.ts
+vite.webview.config.ts
+```
+
+## Build only the extension
+
+```bash
+npm run build:extension
+```
+
+Produces:
+
+```text
+dist/extension.js
+```
+
+## Build only the webview
+
+```bash
+npm run build:webview
+```
+
+Produces:
+
+```text
+dist/webview/webview.js
+dist/webview/webview.css
+```
+
+## Watch both runtimes
+
+```bash
+npm run watch
+```
+
+Runs both watch processes with `concurrently`.
+
+## Watch one runtime
+
+```bash
+npm run watch:extension
+npm run watch:webview
+```
+
+## Development alias
+
+```bash
+npm run dev
+```
+
+Currently aliases `npm run watch`.
+
+## Launch VS Code from the terminal
+
+```bash
+npm run dev:extension
+```
+
+This runs `scripts/run-extension-dev.mjs`.
+
+Override the VS Code CLI executable with:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev:extension
+```
+
+## Type checking
+
+```bash
+npm run typecheck
+```
+
+Checks both extension-host and webview TypeScript configurations.
+
+## Lint
+
+```bash
+npm run lint
+```
+
+
+## Preview
+
+```bash
+npm run dev
+```
+
+The development command starts a Vite preview for the React webview automatically.
+
+The browser uses the preview shim for `acquireVsCodeApi()`.
+
+The VS Code-hosted webview continues to use the real API.
+
+Run only the preview with:
+
+```bash
+npm run dev:preview
+```

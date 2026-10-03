@@ -1,6 +1,4 @@
-out
-dist
-node_modules
-.vscode-test/
+node_modules/
+packages/*/node_modules/
 *.vsix
-.venv
+.DS_Store

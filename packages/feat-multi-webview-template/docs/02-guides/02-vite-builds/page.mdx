@@ -1,0 +1,57 @@
+---
+title: Vite Builds
+label: Vite Builds
+---
+
+# Vite Builds
+
+The extension and webviews target different runtimes, so they use separate Vite configurations.
+
+## Extension build
+
+`vite.extension.config.ts` builds:
+
+```text
+src/extension.ts
+→ dist/extension.js
+```
+
+The `vscode` module remains external because VS Code provides it at runtime.
+
+## Multi-entry webview build
+
+`vite.webview.config.ts` uses one Vite build with multiple browser entries:
+
+```ts
+rollupOptions: {
+  input: {
+    dashboard: "src/webviews/dashboard/index.tsx",
+    settings: "src/webviews/settings/index.tsx",
+  },
+}
+```
+
+Output:
+
+```text
+dist/webviews/
+├── dashboard.js
+├── settings.js
+├── webview.css
+└── chunks/
+    └── shared-*.js
+```
+
+Each panel loads its own entry bundle while Vite can extract common React and shared UI code into chunks.
+
+## Why one webview build?
+
+The webviews are related screens in one extension.
+
+A single multi-entry build lets them share dependencies and infrastructure without creating a separate npm application for each view.
+
+## TypeScript boundaries
+
+The root `tsconfig.json` excludes `src/webviews/**`.
+
+`tsconfig.webview.json` includes browser libraries, JSX, the webview sources, and the runtime-neutral message contracts in `src/shared/**`.

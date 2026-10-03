@@ -1,0 +1,66 @@
+---
+title: Webview Messaging
+label: Webview Messaging
+---
+
+# Webview Messaging
+
+Multiple webviews use one shared message contract.
+
+## Shared contract
+
+`src/shared/messages.ts` defines both directions:
+
+```ts
+type WebviewToExtensionMessage = {
+  type: "showMessage";
+  source: "dashboard" | "settings";
+  message: string;
+};
+
+type ExtensionToWebviewMessage = {
+  type: "messageShown";
+  message: string;
+};
+```
+
+The `source` field lets the extension know which webview sent the message.
+
+## React to extension
+
+Every webview imports the same API wrapper:
+
+```ts
+postMessage({
+  type: "showMessage",
+  source: "dashboard",
+  message: "Hello from the dashboard webview!",
+});
+```
+
+## Extension to React
+
+The reusable panel helper listens for messages and responds through the panel that sent them.
+
+```ts
+await panel.webview.postMessage({
+  type: "messageShown",
+  message: `VS Code received the message from ${message.source}.`,
+});
+```
+
+## Browser preview
+
+`acquireVsCodeApi()` only exists inside VS Code.
+
+The shared wrapper falls back to a preview shim in a normal browser. The shim simulates the response event so Dashboard and Settings can both be exercised through Vite previews.
+
+The production message path remains:
+
+```text
+React webview
+→ acquireVsCodeApi().postMessage(...)
+→ extension host
+→ panel.webview.postMessage(...)
+→ React
+```

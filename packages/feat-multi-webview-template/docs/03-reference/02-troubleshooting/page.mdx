@@ -1,0 +1,87 @@
+---
+title: Troubleshooting
+label: Troubleshooting
+---
+
+# Troubleshooting
+
+## A panel is blank
+
+Confirm the build generated:
+
+```text
+dist/extension.js
+dist/webviews/dashboard.js
+dist/webviews/settings.js
+dist/webviews/webview.css
+```
+
+Then open:
+
+```text
+Developer: Toggle Developer Tools
+```
+
+and inspect the console.
+
+## One webview works and another does not
+
+Check that its ID is present in all required places:
+
+```text
+WebviewId
+Vite input
+WEBVIEWS definition
+command registration
+package.json contribution
+```
+
+Also verify that the entry name matches the generated `dist/webviews/<entry>.js` file.
+
+## JavaScript is blocked
+
+Confirm:
+
+```ts
+enableScripts: true
+```
+
+and verify that the script nonce matches the Content Security Policy.
+
+## CSS or JavaScript cannot load
+
+Check:
+
+```text
+localResourceRoots
+webview.asWebviewUri(...)
+dist/webviews/*
+```
+
+The panel factory allows local resources from:
+
+```text
+dist/webviews
+```
+
+## React cannot import vscode
+
+That is expected.
+
+The `vscode` module only exists in the extension host. Browser code communicates through the shared `acquireVsCodeApi()` wrapper.
+
+## Browser preview behaves differently
+
+The browser preview uses a shim. It can simulate message flow but cannot call real VS Code APIs.
+
+Use the Extension Development Host to verify host-specific behavior.
+
+## The code command is not available
+
+Set:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev:extension
+```
+
+or use the checked-in `F5` launch configuration.

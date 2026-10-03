@@ -1,0 +1,86 @@
+---
+title: Troubleshooting
+label: Troubleshooting
+---
+
+# Troubleshooting
+
+## The webview panel is blank
+
+Confirm these files exist:
+
+```text
+dist/extension.js
+webview-ui/dist/assets/index.js
+webview-ui/dist/assets/index.css
+```
+
+Then open:
+
+```text
+Developer: Toggle Developer Tools
+```
+
+and inspect the console.
+
+## JavaScript is blocked
+
+Confirm:
+
+```ts
+enableScripts: true
+```
+
+Also verify that the script nonce matches the nonce allowed by the Content Security Policy.
+
+## Assets cannot load
+
+Check:
+
+```text
+localResourceRoots
+webview.asWebviewUri(...)
+webview-ui/dist paths
+```
+
+The allowed local root should be:
+
+```text
+webview-ui/dist
+```
+
+## React cannot import vscode
+
+That is expected.
+
+The browser package cannot use the `vscode` module directly.
+
+Use `acquireVsCodeApi()` and send a message to the root extension.
+
+## npm install only installs the root package
+
+The root package should contain:
+
+```json
+{
+  "postinstall": "npm ci --prefix webview-ui"
+}
+```
+
+This installs the nested package automatically.
+
+## Packaging includes webview-ui/node_modules
+
+The VSIX ignore rules should exclude:
+
+```text
+webview-ui/node_modules/**
+```
+
+while keeping:
+
+```text
+webview-ui/dist/**
+```
+
+so the built browser assets ship without the nested development dependencies.

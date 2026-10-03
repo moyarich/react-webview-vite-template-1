@@ -1,0 +1,56 @@
+---
+title: React Webview Vite Template
+label: Overview
+---
+
+# React Webview Vite Template
+
+This documentation explains the complete implementation behind the minimal VS Code webview example.
+
+The repository intentionally uses one package and two build targets:
+
+```text
+VS Code extension host        Webview
+Node.js                       Browser
+src/extension.ts              src/webview/*
+        \                       /
+         \                     /
+          ---- message bridge ----
+```
+
+Both runtimes are built with Vite:
+
+```text
+vite.extension.config.ts → dist/extension.js
+vite.webview.config.ts   → dist/webview/*
+```
+
+## Start here
+
+If you downloaded or cloned the repository:
+
+```bash
+npm install
+```
+
+Then open the project in VS Code and press `F5`.
+
+Run **Open React Webview** from the Command Palette.
+
+## Documentation map
+
+- **Getting Started** — install, build, and run the example.
+- **Architecture** — understand the two-runtime model.
+- **Vite Builds** — see why the extension and webview use separate Vite configs.
+- **Webview Messaging** — follow messages in both directions.
+- **VS Code-Themed Components** — combine Tailwind with VS Code CSS variables.
+- **Scripts** — reference every root npm command.
+- **Troubleshooting** — diagnose blank panels, blocked scripts, and missing assets.
+
+MoyaForge can discover these pages with:
+
+```js
+const modules = import.meta.glob("./docs/**/page.mdx", { eager: true });
+```
+
+Ordered directory names control navigation order while MoyaForge removes the numeric prefixes from generated labels.
