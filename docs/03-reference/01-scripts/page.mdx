@@ -95,3 +95,22 @@ Checks both extension-host and webview TypeScript configurations.
 ```bash
 npm run lint
 ```
+
+
+## Browser preview
+
+```bash
+npm run dev
+```
+
+The development command starts a Vite browser preview for the React webview automatically.
+
+The browser uses the preview shim for `acquireVsCodeApi()`.
+
+The VS Code-hosted webview continues to use the real API.
+
+Run only the browser preview with:
+
+```bash
+npm run dev:browser
+```
