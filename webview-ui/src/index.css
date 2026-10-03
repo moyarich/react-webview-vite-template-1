@@ -14,9 +14,6 @@ body {
   color: var(--vscode-foreground);
 }
 
-button,
-input,
-textarea,
-select {
+button {
   font-family: inherit;
 }
