@@ -5,149 +5,57 @@ label: Architecture
 
 # Architecture
 
-A VS Code extension with a webview runs code in two different environments.
-
-## Extension host
-
-The extension host runs in Node.js.
-
-Entry point:
+The extension has one Node.js runtime and multiple browser runtimes.
 
 ```text
-src/extension.ts
-```
-
-It can use the VS Code API:
-
-```ts
-import * as vscode from "vscode";
-
-vscode.window.showInformationMessage("Hello");
-```
-
-It does not have a browser DOM.
-
-## Webview
-
-The webview runs in an isolated browser context.
-
-Source:
-
-```text
-src/webview/*
-```
-
-It can use React, browser APIs, and the DOM.
-
-It cannot import and use the `vscode` module directly.
-
-## The boundary
-
-The two runtimes communicate with messages:
-
-```text
-React webview
-    │
-    │ vscode.postMessage(...)
-    ▼
 Extension host
-    │
-    │ VS Code API
-    │
-    │ panel.webview.postMessage(...)
-    ▼
-React webview
+├── dashboard webview
+└── settings webview
 ```
 
-This separation is the most important concept in the project.
+All webviews belong to the same extension and npm package.
 
 ## Source layout
 
 ```text
 src/
 ├── extension.ts
-└── webview/
-    ├── App.tsx
-    ├── index.tsx
-    ├── index.css
-    ├── vscode.d.ts
-    ├── api/
-    │   └── vscode-api.ts
-    └── components/
-        └── vscode-ui.tsx
+├── extension/
+│   └── webviews/
+│       └── openWebviewPanel.ts
+├── shared/
+│   └── messages.ts
+└── webviews/
+    ├── dashboard/
+    ├── settings/
+    └── shared/
 ```
 
-## Build layout
+`src/shared/messages.ts` contains contracts that are safe for both Node and browser runtimes.
 
-```text
-dist/
-├── extension.js
-└── webview/
-    ├── webview.js
-    └── webview.css
+`src/webviews/shared/` contains browser-only infrastructure reused by every React webview.
+
+## Reusable panel factory
+
+Commands do not duplicate panel creation:
+
+```ts
+openWebviewPanel(context, "dashboard");
+openWebviewPanel(context, "settings");
 ```
 
-Keeping both outputs under `dist/` makes packaging and webview resource paths easy to reason about.
-
+The factory centralizes CSP, resource URIs, shared CSS, scripts, and message handling.
 
 ## Command surface
 
-The extension contributes one command:
-
 ```text
-react-webview-vite.openPanel
+React Webviews
+├── Open React Dashboard
+└── Open React Settings
 ```
 
-It is available from the Command Palette, from the editor context menu, and from the Explorer file context menu:
+The submenu is contributed to both `editor/context` and `explorer/context`.
 
-```text
-React Webview
-└── Open React Webview
-```
+## Scaling
 
-The submenu is declared with `contributes.submenus` and inserted into `editor/context` through `contributes.menus`.
-
-The submenu itself receives the command through a menu whose ID matches the submenu ID:
-
-```json
-{
-  "submenus": [
-    {
-      "id": "react-webview-vite.webviewMenu",
-      "label": "React Webview"
-    }
-  ],
-  "menus": {
-    "editor/context": [
-      {
-        "submenu": "react-webview-vite.webviewMenu"
-      }
-    ],
-    "explorer/context": [
-      {
-        "submenu": "react-webview-vite.webviewMenu"
-      }
-    ],
-    "react-webview-vite.webviewMenu": [
-      {
-        "command": "react-webview-vite.openPanel"
-      }
-    ]
-  }
-}
-```
-
-
-### Editor vs Explorer context menus
-
-VS Code uses different menu contribution points depending on where the user right-clicks:
-
-```text
-Right-click inside an open editor
-→ editor/context
-
-Right-click a file in the Explorer sidebar
-→ explorer/context
-```
-
-If a command should appear in both places, contribute the submenu to both menu IDs.
+Adding another view should add a new entry folder and definition, not a new copy of the shared webview infrastructure.
