@@ -1,56 +1,41 @@
 ---
-title: React Webview Vite Template
+title: Monorepo Developer Notes
 label: Overview
 ---
 
-# React Webview Vite Template
+# Monorepo Developer Notes
 
-This documentation explains the complete implementation behind the minimal VS Code webview example.
+These notes are for maintainers working on the repository structure and shared tooling.
 
-The repository intentionally uses one package and two build targets:
-
-```text
-VS Code extension host        Webview
-Node.js                       Browser
-src/extension.ts              src/webview/*
-        \                       /
-         \                     /
-          ---- message bridge ----
-```
-
-Both runtimes are built with Vite:
+Student-facing material lives in:
 
 ```text
-vite.extension.config.ts → dist/extension.js
-vite.webview.config.ts   → dist/webview/*
+README.md
+packages/*/README.md
 ```
 
-## Start here
+Developer and maintainer notes live in:
 
-If you downloaded or cloned the repository:
-
-```bash
-npm install
+```text
+docs/*
+packages/*/docs/*
 ```
 
-Then open the project in VS Code and press `F5`.
+## Repository model
 
-Run **Open React Webview** from the Command Palette.
-
-## Documentation map
-
-- **Getting Started** — install, build, and run the example.
-- **Architecture** — understand the two-runtime model.
-- **Vite Builds** — see why the extension and webview use separate Vite configs.
-- **Webview Messaging** — follow messages in both directions.
-- **VS Code-Themed Components** — combine Tailwind with VS Code CSS variables.
-- **Scripts** — reference every root npm command.
-- **Troubleshooting** — diagnose blank panels, blocked scripts, and missing assets.
-
-MoyaForge can discover these pages with:
-
-```js
-const modules = import.meta.glob("./docs/**/page.mdx", { eager: true });
+```text
+repository root
+├── package.json
+├── scripts/
+│   └── run-workspaces.mjs
+├── docs/
+└── packages/
+    ├── single-webview/
+    ├── separate-webview-ui/
+    ├── multi-webview/
+    └── scaffold/
 ```
 
-Ordered directory names control navigation order while MoyaForge removes the numeric prefixes from generated labels.
+The root owns workspace orchestration.
+
+Each package owns its implementation, student tutorial, and package-specific developer notes.

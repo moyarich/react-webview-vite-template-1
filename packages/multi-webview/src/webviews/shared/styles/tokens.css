@@ -1,0 +1,24 @@
+:root {
+  --webview-font-family: var(
+    --vscode-font-family,
+    ui-sans-serif,
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    "Segoe UI",
+    sans-serif
+  );
+  --webview-foreground: var(--vscode-foreground, #1f2328);
+  --webview-background: var(--vscode-editor-background, #ffffff);
+  --webview-description-foreground: var(
+    --vscode-descriptionForeground,
+    #636c76
+  );
+  --webview-panel-border: var(--vscode-panel-border, #d0d7de);
+  --webview-button-background: var(--vscode-button-background, #0969da);
+  --webview-button-foreground: var(--vscode-button-foreground, #ffffff);
+  --webview-button-hover-background: var(
+    --vscode-button-hoverBackground,
+    #0860ca
+  );
+}

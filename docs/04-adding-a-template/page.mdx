@@ -1,0 +1,85 @@
+---
+title: Adding a Template
+label: Adding a Template
+---
+
+# Adding a Template
+
+Add a new architecture as a self-contained workspace under:
+
+```text
+packages/<template-name>/
+```
+
+## Requirements
+
+A new package should include:
+
+```text
+packages/<template-name>/
+├── package.json
+├── README.md
+├── src/
+└── ...
+```
+
+Use:
+
+```text
+README.md
+```
+
+for the student tutorial.
+
+Use:
+
+```text
+docs/*
+```
+
+inside the package for developer or maintainer notes.
+
+## Package naming
+
+Choose a package name that describes the architecture or teaching purpose.
+
+Prefer:
+
+```text
+react-webview-vite-<architecture>
+```
+
+Avoid names derived from temporary branches such as:
+
+```text
+feat-*
+fix-*
+docs-*
+scaffold-branch-name
+```
+
+## Root integration
+
+Because the root workspace uses:
+
+```json
+{
+  "workspaces": ["packages/*"]
+}
+```
+
+the package is discovered automatically.
+
+Add a root convenience script only when the package is important enough to justify a dedicated developer command.
+
+For example:
+
+```json
+{
+  "dev:multi": "npm run dev --workspace react-webview-vite-multi-webview"
+}
+```
+
+## Student-facing index
+
+Update the root `README.md` when the new template should be part of the recommended student learning path.

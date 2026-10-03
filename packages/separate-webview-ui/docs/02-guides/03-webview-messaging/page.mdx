@@ -1,0 +1,129 @@
+---
+title: Webview Messaging
+label: Webview Messaging
+---
+
+# Webview Messaging
+
+The example uses one message in each direction.
+
+## React to extension
+
+VS Code exposes `acquireVsCodeApi()` inside the browser webview.
+
+The type declaration lives at:
+
+```text
+webview-ui/src/vscode.d.ts
+```
+
+```ts
+type VSCodeApi = {
+  postMessage: (message: unknown) => void;
+};
+
+declare function acquireVsCodeApi(): VSCodeApi;
+```
+
+The wrapper lives at:
+
+```text
+webview-ui/src/api/vscode-api.ts
+```
+
+```ts
+const vscode = acquireVsCodeApi();
+
+export function postMessage(message: WebviewMessage) {
+  vscode.postMessage(message);
+}
+```
+
+React sends:
+
+```ts
+postMessage({
+  type: "showMessage",
+  message: "Hello from the React webview!",
+});
+```
+
+## Extension receives the message
+
+The root extension listens with:
+
+```ts
+panel.webview.onDidReceiveMessage(async (message) => {
+  if (message.type !== "showMessage") {
+    return;
+  }
+
+  await vscode.window.showInformationMessage(message.message);
+});
+```
+
+## Extension to React
+
+The extension replies:
+
+```ts
+await panel.webview.postMessage({
+  type: "messageShown",
+  message: "VS Code received the message.",
+});
+```
+
+React listens with:
+
+```ts
+window.addEventListener("message", handleMessage);
+```
+
+and updates state when the response arrives.
+
+## Complete flow
+
+```text
+React button
+→ acquireVsCodeApi().postMessage(...)
+→ extension receives message
+→ VS Code API
+→ panel.webview.postMessage(...)
+→ React message event
+→ state update
+```
+
+
+## Browser preview shim
+
+`acquireVsCodeApi()` is injected by VS Code and does not exist in an ordinary browser.
+
+The API wrapper therefore chooses between the real implementation and a browser-only preview shim:
+
+```ts
+vscodeApi =
+  typeof acquireVsCodeApi === "function"
+    ? acquireVsCodeApi()
+    : createPreviewVsCodeApi();
+```
+
+The preview implementation supports:
+
+- `postMessage(...)`
+- `getState()`
+- `setState(...)`
+
+For `showMessage`, the shim dispatches a synthetic browser `message` event:
+
+```ts
+window.dispatchEvent(
+  new MessageEvent("message", {
+    data: {
+      type: "messageShown",
+      message: "Preview shim received the message.",
+    },
+  }),
+);
+```
+
+This keeps React behavior testable in a browser while preserving the real extension-host message path inside VS Code.

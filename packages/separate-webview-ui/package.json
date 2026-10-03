@@ -1,0 +1,73 @@
+{
+  "name": "react-webview-vite-separate-webview-ui",
+  "displayName": "React Webview Vite",
+  "description": "A minimal VS Code extension with a React, Vite, and Tailwind CSS webview in a separate webview-ui package.",
+  "version": "0.0.1",
+  "engines": {
+    "vscode": "^1.118.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "activationEvents": [],
+  "main": "./dist/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "react-webview-vite.openPanel",
+        "title": "Open React Webview"
+      }
+    ],
+    "submenus": [
+      {
+        "id": "react-webview-vite.webviewMenu",
+        "label": "React Webview"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ],
+      "react-webview-vite.webviewMenu": [
+        {
+          "command": "react-webview-vite.openPanel",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ]
+    }
+  },
+  "scripts": {
+    "postinstall": "npm ci --prefix webview-ui",
+    "vscode:prepublish": "npm run build",
+    "build": "npm run build:extension && npm run build:webview",
+    "build:extension": "vite build --config vite.extension.config.ts",
+    "build:webview": "npm --prefix webview-ui run build",
+    "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
+    "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
+    "watch:webview": "npm --prefix webview-ui run build:watch",
+    "dev": "concurrently -k -n extension,webview,preview,vscode \"npm run watch:extension\" \"npm run watch:webview\" \"npm run dev:preview\" \"npm run dev:extension\"",
+    "dev:preview": "npm --prefix webview-ui run dev",
+    "dev:extension": "node ./scripts/run-extension-dev.mjs",
+    "typecheck": "tsc --noEmit && npm --prefix webview-ui run typecheck",
+    "lint": "eslint src && npm --prefix webview-ui run lint"
+  },
+  "devDependencies": {
+    "@types/node": "22.x",
+    "@types/vscode": "^1.118.0",
+    "concurrently": "^9.2.1",
+    "eslint": "^9.39.3",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.56.1",
+    "vite": "^8.0.10"
+  },
+  "private": true
+}

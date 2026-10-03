@@ -1,0 +1,97 @@
+---
+title: Workspace CLI
+label: Workspace CLI
+---
+
+# Workspace CLI
+
+The repository includes:
+
+```text
+scripts/run-workspaces.mjs
+```
+
+It is exposed through:
+
+```json
+{
+  "bin": {
+    "run-workspaces": "./scripts/run-workspaces.mjs"
+  }
+}
+```
+
+The CLI uses:
+
+- Commander for argument parsing and help output
+- `fzf` for fuzzy workspace matching
+
+## Default use
+
+The normal root scripts should remain the shortest path:
+
+```bash
+npm run build
+npm run typecheck
+npm run lint
+npm test
+```
+
+Use `run-workspaces` when explicit workspace selection or richer output is useful.
+
+## Examples
+
+Run across all packages:
+
+```bash
+npm run workspaces:run -- build
+```
+
+Exact selection:
+
+```bash
+npm run workspaces:run -- build --workspace multi-webview
+```
+
+Fuzzy selection:
+
+```bash
+npm run workspaces:run -- build --filter multi
+```
+
+Limit fuzzy results:
+
+```bash
+npm run workspaces:run -- build --filter webview --limit 2
+```
+
+Inspect selection:
+
+```bash
+npm run workspaces:run -- build --list
+```
+
+Dry run:
+
+```bash
+npm run workspaces:run -- build --filter multi --dry-run
+```
+
+Forward arguments:
+
+```bash
+npm run workspaces:run -- test -- --runInBand
+```
+
+## Output contract
+
+The CLI uses:
+
+```text
+RUN
+SKIP
+PASS
+FAIL
+```
+
+A failed workspace stops execution and returns that command's exit code.

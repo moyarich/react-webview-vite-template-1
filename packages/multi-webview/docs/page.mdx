@@ -1,0 +1,59 @@
+---
+title: React Webview Vite Template
+label: Overview
+---
+
+# React Webview Vite Template
+
+This repository demonstrates multiple React webviews inside one VS Code extension and one npm package.
+
+```text
+VS Code extension host
+├── Dashboard webview
+└── Settings webview
+```
+
+Shared browser infrastructure lives under:
+
+```text
+src/webviews/shared/
+```
+
+Runtime-neutral message contracts live under:
+
+```text
+src/shared/
+```
+
+## Build model
+
+```text
+vite.extension.config.ts
+→ dist/extension.js
+
+vite.webview.config.ts
+→ dist/webviews/dashboard.js
+→ dist/webviews/settings.js
+→ shared chunks/styles
+```
+
+## Start here
+
+```bash
+npm install
+npm run dev
+```
+
+The development command starts both build watchers, opens a browser preview, and launches the Extension Development Host.
+
+## Documentation map
+
+- **Getting Started** — install, build, preview, and run both example webviews.
+- **Architecture** — understand the one-extension/many-webviews structure.
+- **Vite Builds** — configure multi-entry browser builds.
+- **Webview Messaging** — share message contracts across all views.
+- **VS Code-Themed Components** — reuse private theme tokens and UI components.
+- **Scripts** — reference the development commands.
+- **Troubleshooting** — diagnose entry, asset, preview, and host issues.
+
+MoyaForge discovers these pages through `docs/**/page.mdx`.

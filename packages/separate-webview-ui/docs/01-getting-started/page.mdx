@@ -1,0 +1,103 @@
+---
+title: Getting Started
+label: Getting Started
+---
+
+# Getting Started
+
+This project contains two npm packages:
+
+```text
+react-webview-vite/
+├── package.json
+└── webview-ui/
+    └── package.json
+```
+
+The root package is the VS Code extension.
+
+`webview-ui/` is the React browser application rendered inside the webview.
+
+## Install
+
+From the repository root:
+
+```bash
+npm install
+```
+
+The root package runs:
+
+```bash
+npm ci --prefix webview-ui
+```
+
+from `postinstall`, so the nested frontend dependencies are installed automatically.
+
+## Build
+
+Run:
+
+```bash
+npm run build
+```
+
+The expected output is:
+
+```text
+dist/
+└── extension.js
+
+webview-ui/dist/
+├── index.html
+└── assets/
+    ├── index.js
+    └── index.css
+```
+
+## Run with F5
+
+Open the repository in VS Code and press:
+
+```text
+F5
+```
+
+The launch configuration runs the root build task before opening the Extension Development Host.
+
+In the new window:
+
+1. Open the Command Palette.
+2. Run **Open React Webview**.
+3. Click **Send message to VS Code**.
+
+You should see a native VS Code notification and then a React status update.
+
+## Development mode
+
+Run:
+
+```bash
+npm run dev
+```
+
+This performs an initial build, starts both Vite watchers, and launches a VS Code Extension Development Host for the current repository:
+
+```text
+src/extension.ts
+→ dist/extension.js
+
+webview-ui/src/*
+→ webview-ui/dist/assets/*
+
+current repository
+→ VS Code Extension Development Host
+```
+
+If the VS Code CLI has a different name:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev
+```
+
+Use `F5` when you want the normal VS Code debugger workflow instead.

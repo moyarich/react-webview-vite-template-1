@@ -1,0 +1,137 @@
+---
+title: Scripts
+label: Scripts
+---
+
+# Scripts
+
+Most commands run from the repository root.
+
+## Install both packages
+
+```bash
+npm install
+```
+
+The root `postinstall` runs:
+
+```bash
+npm ci --prefix webview-ui
+```
+
+## Build everything
+
+```bash
+npm run build
+```
+
+Runs:
+
+```text
+build:extension
+build:webview
+```
+
+## Build only the extension
+
+```bash
+npm run build:extension
+```
+
+Produces:
+
+```text
+dist/extension.js
+```
+
+## Build only the webview
+
+```bash
+npm run build:webview
+```
+
+Runs the nested `webview-ui` build and produces:
+
+```text
+webview-ui/dist/assets/index.js
+webview-ui/dist/assets/index.css
+```
+
+## Watch both projects
+
+```bash
+npm run watch
+```
+
+This starts only the two build watchers.
+
+## Start the complete development environment
+
+```bash
+npm run dev
+```
+
+Before `dev` runs, the `predev` lifecycle script performs a complete build.
+
+Then `dev` runs three processes with `concurrently`:
+
+```text
+watch:extension
+watch:webview
+dev:extension
+```
+
+`dev:extension` launches VS Code with the current repository passed as `--extensionDevelopmentPath` and keeps the CLI attached with `--wait`.
+
+Override the VS Code CLI command when needed:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev
+```
+
+## Watch only the extension
+
+```bash
+npm run watch:extension
+```
+
+## Watch only the webview
+
+```bash
+npm run watch:webview
+```
+
+## Type checking
+
+```bash
+npm run typecheck
+```
+
+Checks the root extension and nested webview package.
+
+## Lint
+
+```bash
+npm run lint
+```
+
+Runs linting for both packages.
+
+
+## Preview
+
+```bash
+npm run dev
+```
+
+The development command starts a Vite preview for the React webview automatically.
+
+The browser uses the preview shim for `acquireVsCodeApi()`.
+
+The VS Code-hosted webview continues to use the real API.
+
+Run only the preview with:
+
+```bash
+npm run dev:preview
+```

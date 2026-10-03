@@ -1,0 +1,93 @@
+---
+title: Getting Started
+label: Getting Started
+---
+
+# Getting Started
+
+The repository runs as one npm package with one VS Code extension host and multiple React webviews.
+
+## Requirements
+
+You need:
+
+- Node.js compatible with Vite
+- npm
+- VS Code
+
+## Install
+
+```bash
+npm install
+```
+
+## Build
+
+```bash
+npm run build
+```
+
+Expected output:
+
+```text
+dist/
+├── extension.js
+└── webviews/
+    ├── dashboard.js
+    ├── settings.js
+    ├── webview.css
+    └── chunks/
+```
+
+## Run with F5
+
+Open the repository in VS Code and press `F5`.
+
+In the Extension Development Host, run either:
+
+```text
+Open React Dashboard
+Open React Settings
+```
+
+Both commands use the same panel factory and shared webview infrastructure.
+
+## Verify messaging
+
+Click **Send message to VS Code** in either webview.
+
+Expected sequence:
+
+```text
+React webview
+→ shared postMessage wrapper
+→ extension host
+→ VS Code notification
+→ panel response
+→ React status update
+```
+
+## Development mode
+
+```bash
+npm run dev
+```
+
+This starts:
+
+```text
+extension watcher
+webview watcher
+browser preview
+VS Code Extension Development Host
+```
+
+The browser opens the Dashboard preview by default.
+
+Open the Settings preview at:
+
+```text
+/previews/settings.html
+```
+
+The preview uses the browser shim for `acquireVsCodeApi()`.

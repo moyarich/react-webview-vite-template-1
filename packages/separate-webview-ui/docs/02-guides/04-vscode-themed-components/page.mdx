@@ -1,0 +1,84 @@
+---
+title: VS Code-Themed Components
+label: VS Code-Themed Components
+---
+
+# VS Code-Themed Components
+
+The browser UI uses Tailwind for layout and VS Code theme variables for colors.
+
+The stylesheet starts with:
+
+```css
+@import "tailwindcss";
+```
+
+VS Code injects variables such as:
+
+```css
+var(--vscode-editor-background)
+var(--vscode-foreground)
+var(--vscode-descriptionForeground)
+var(--vscode-panel-border)
+var(--vscode-button-background)
+var(--vscode-button-foreground)
+var(--vscode-button-hoverBackground)
+```
+
+The React components can use those values directly through Tailwind arbitrary values.
+
+Example:
+
+```tsx
+<button
+  className="
+    bg-[var(--vscode-button-background)]
+    text-[var(--vscode-button-foreground)]
+    hover:bg-[var(--vscode-button-hoverBackground)]
+  "
+>
+```
+
+The example keeps the component layer intentionally small:
+
+- `VSCodeButton`
+- `VSCodeCard`
+
+This demonstrates the pattern without introducing a large design system.
+
+
+## Private theme tokens
+
+React components should not read VS Code's host-provided `--vscode-*` variables directly.
+
+Instead, `index.css` maps host theme values into app-owned private variables with browser-safe defaults:
+
+```css
+:root {
+  --webview-foreground: var(--vscode-foreground, #1f2328);
+  --webview-background: var(--vscode-editor-background, #ffffff);
+  --webview-panel-border: var(--vscode-panel-border, #d0d7de);
+  --webview-button-background: var(--vscode-button-background, #0969da);
+  --webview-button-foreground: var(--vscode-button-foreground, #ffffff);
+  --webview-button-hover-background: var(
+    --vscode-button-hoverBackground,
+    #0860ca
+  );
+}
+```
+
+Components consume only `--webview-*` values:
+
+```tsx
+className="bg-[var(--webview-button-background)] text-[var(--webview-button-foreground)]"
+```
+
+This gives the webview a stable default theme in a normal browser while allowing VS Code to override those private tokens indirectly through its injected `--vscode-*` variables.
+
+The dependency remains one-way:
+
+```text
+components
+→ private webview tokens
+→ browser defaults / optional VS Code host values
+```
