@@ -3,12 +3,8 @@
   "tasks": [
     {
       "type": "npm",
-      "script": "watch:extension",
-      "problemMatcher": "$tsc-watch",
-      "isBackground": true,
-      "presentation": {
-        "reveal": "never"
-      },
+      "script": "build",
+      "problemMatcher": [],
       "group": {
         "kind": "build",
         "isDefault": true
