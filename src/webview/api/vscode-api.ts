@@ -6,13 +6,25 @@ export type WebviewMessage = {
 let vscodeApi: VSCodeApi | undefined;
 
 function getVsCodeApi() {
-  if (!vscodeApi) {
-    vscodeApi = acquireVsCodeApi();
+  if (vscodeApi) {
+    return vscodeApi;
   }
 
+  if (typeof acquireVsCodeApi !== "function") {
+    return undefined;
+  }
+
+  vscodeApi = acquireVsCodeApi();
   return vscodeApi;
 }
 
 export function postMessage(message: WebviewMessage) {
-  getVsCodeApi().postMessage(message);
+  const vscode = getVsCodeApi();
+
+  if (!vscode) {
+    return false;
+  }
+
+  vscode.postMessage(message);
+  return true;
 }
