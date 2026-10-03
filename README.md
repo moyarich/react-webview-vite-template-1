@@ -1,77 +1,125 @@
 # React Webview Vite Templates
 
-A monorepo of VS Code extension templates for React webviews.
+Learn how to build VS Code webviews with **React**, **Vite**, **Tailwind CSS**, and the **VS Code Webview API**.
 
-The packages are organized by **architecture**, so you can start with the structure that matches the extension you are building instead of reshaping a single example later.
+This repository contains several complete examples. Start with the one that matches what you want to build.
 
-## Choose a template
+## Which example should I use?
 
-| Template | Use it when... | Structure |
-| --- | --- | --- |
-| [`single-webview`](./packages/single-webview) | your extension has one React webview and you want the smallest setup | extension + React live in one npm package |
-| [`separate-webview-ui`](./packages/separate-webview-ui) | the React UI should behave like its own frontend application | extension package + nested `webview-ui/` package |
-| [`multi-webview`](./packages/multi-webview) | your extension has multiple related React webviews that should share components, theme tokens, messaging, and dependencies | one package + multiple Vite webview entries |
-| [`scaffold`](./packages/scaffold) | you want a generator-style baseline to build from | conventional VS Code scaffold + separate `webview-ui/` |
+| Example | Start here when... |
+| --- | --- |
+| [**Single Webview**](./packages/single-webview/README.md) | you are learning VS Code webviews or your extension needs one React interface |
+| [**Separate Webview UI**](./packages/separate-webview-ui/README.md) | you want the React frontend kept in its own `webview-ui/` application |
+| [**Multiple Webviews**](./packages/multi-webview/README.md) | your extension needs several React webviews that share components, styles, and messaging |
+| [**Scaffold**](./packages/scaffold/README.md) | you want to begin closer to the project created by the VS Code extension generator |
 
-### Quick choice
+If this is your first time building a React webview, start with:
 
-```text
-One webview?
-├─ yes → single-webview
-└─ no
-   └─ Multiple related webviews?
-      ├─ yes → multi-webview
-      └─ no / frontend is independently managed → separate-webview-ui
-```
+**[Single Webview →](./packages/single-webview/README.md)**
 
-The `scaffold` package is useful when you want to see the less-opinionated starting point.
+## Learning path
 
-## Repository structure
+A good progression is:
 
 ```text
-.
-├── package.json
-├── scripts/
-│   └── run-workspaces.mjs
-└── packages/
-    ├── single-webview/
-    ├── separate-webview-ui/
-    ├── multi-webview/
-    └── scaffold/
+1. Single Webview
+   ↓
+2. Separate Webview UI
+   ↓
+3. Multiple Webviews
 ```
 
-The repository root is only the npm workspace and orchestration layer.
+### 1. Single Webview
 
-Each template owns its own:
+Learn the core model:
 
-- extension source
-- React source
-- Vite configuration
-- TypeScript configuration
-- VS Code contribution points
-- development scripts
-- documentation
-- browser-preview setup where supported
+```text
+VS Code extension
+      ↕ messages
+React webview
+```
+
+You will work with:
+
+- `createWebviewPanel()`
+- React inside a VS Code webview
+- `acquireVsCodeApi()`
+- extension ↔ webview messaging
+- Vite builds
+- Tailwind CSS
+- VS Code theme variables
+- browser preview
+
+**[Open the Single Webview tutorial →](./packages/single-webview/README.md)**
+
+### 2. Separate Webview UI
+
+Learn how to separate the two applications clearly:
+
+```text
+extension/
+    Node.js
+
+webview-ui/
+    React + browser
+```
+
+This is useful when the frontend has its own dependencies, configuration, and development workflow.
+
+**[Open the Separate Webview UI tutorial →](./packages/separate-webview-ui/README.md)**
+
+### 3. Multiple Webviews
+
+Learn how one extension can contain several related React interfaces:
+
+```text
+VS Code extension
+├── Dashboard
+├── Settings
+└── shared webview code
+```
+
+This example covers:
+
+- multiple Vite entry points
+- shared React components
+- shared message types
+- reusable webview panel creation
+- shared CSS
+- webview-specific CSS
+- shared VS Code theme tokens
+
+**[Open the Multiple Webviews tutorial →](./packages/multi-webview/README.md)**
+
+### Scaffold
+
+Use the scaffold when you want to see a more generator-oriented starting point before the project is organized into one of the other patterns.
+
+**[Open the Scaffold tutorial →](./packages/scaffold/README.md)**
+
+## Repository layout
+
+```text
+packages/
+├── single-webview/
+├── separate-webview-ui/
+├── multi-webview/
+└── scaffold/
+```
+
+Each package contains its own runnable example and README tutorial.
 
 ## Install
 
-From the repository root:
+Clone the repository, then install from the root:
 
 ```bash
 npm install
 ```
 
-npm discovers the template packages through:
+The root is an npm workspace, so one install makes the workspace packages available.
 
-```json
-{
-  "workspaces": ["packages/*"]
-}
-```
-
-## Work on one template
-
-You usually do **not** need to run every template.
+## Run an example
 
 ### Single webview
 
@@ -79,7 +127,7 @@ You usually do **not** need to run every template.
 npm run dev:single
 ```
 
-### Separate frontend package
+### Separate webview UI
 
 ```bash
 npm run dev:separate-ui
@@ -97,15 +145,11 @@ npm run dev:multi
 npm run dev:scaffold
 ```
 
-You can also use npm's workspace selector directly:
+Follow the README inside each package for the exact exercise and expected behavior.
 
-```bash
-npm run dev --workspace react-webview-vite-multi-webview
-```
+## Build and check the examples
 
-## Run repository-wide checks
-
-The default root scripts use npm's native workspace support:
+Run a command across the workspace packages:
 
 ```bash
 npm run build
@@ -114,200 +158,65 @@ npm run lint
 npm test
 ```
 
-For example:
+The root scripts use npm workspaces:
 
-```json
-{
-  "build": "npm run build --workspaces --if-present",
-  "typecheck": "npm run typecheck --workspaces --if-present",
-  "lint": "npm run lint --workspaces --if-present",
-  "test": "npm test --workspaces --if-present"
-}
+```bash
+npm run build --workspaces --if-present
 ```
 
-This is the shortest and most familiar way to run the same script across every workspace that defines it.
+Packages that do not define a particular script are skipped.
 
-### Rich workspace runner
+## Workspace helper
 
-The repository also keeps:
+The repository also includes a small workspace CLI:
 
 ```text
 scripts/run-workspaces.mjs
 ```
 
-and exposes it as a package binary:
+It uses **Commander** for CLI options and **fzf** fuzzy matching for selecting examples.
 
-```json
-{
-  "bin": {
-    "run-workspaces": "./scripts/run-workspaces.mjs"
-  }
-}
-```
-
-Use it when you want explicit per-package output:
+For example:
 
 ```bash
-npm run workspaces:run -- build
+npm run workspaces:run -- build --filter multi
 ```
 
-or, when the package binary is available on your PATH:
+Exact selection:
 
 ```bash
-run-workspaces build
+npm run workspaces:run -- build --workspace multi-webview
 ```
 
-Example output:
+See what would run:
+
+```bash
+npm run workspaces:run -- build --list
+```
+
+The normal `npm run build`, `npm run lint`, `npm run typecheck`, and `npm test` commands remain the simplest choice for most exercises.
+
+## What you should understand by the end
+
+After working through these examples, you should be able to explain:
 
 ```text
-RUN  multi-webview — npm run build
-PASS multi-webview
+Extension host
+→ runs in Node.js
+→ can use the VS Code API
 
-SKIP scaffold — script "build" is not defined
+Webview
+→ runs in a browser
+→ can use React and the DOM
 
-Workspace "build" complete: 3 ran, 1 skipped.
+Messages
+→ connect the two runtimes
 ```
 
-The CLI is useful for local diagnostics and CI logs because it reports `RUN`, `SKIP`, `PASS`, and `FAIL` explicitly.
+You should also be able to decide when to use:
 
-## Template details
+- one webview
+- a separately managed frontend
+- multiple shared webviews
 
-### `single-webview`
-
-Use this for the common case: one extension, one React panel.
-
-```text
-single-webview/
-├── src/
-│   ├── extension.ts
-│   └── webview/
-├── vite.extension.config.ts
-└── vite.webview.config.ts
-```
-
-The extension host and React webview use separate build configurations but share one npm package.
-
-Good fit for:
-
-- settings panels
-- inspectors
-- custom editors with one primary UI
-- small extension dashboards
-
-### `separate-webview-ui`
-
-Use this when the browser UI should have a stronger application boundary.
-
-```text
-separate-webview-ui/
-├── src/
-│   └── extension.ts
-└── webview-ui/
-    ├── package.json
-    ├── vite.config.ts
-    └── src/
-```
-
-Good fit when the frontend needs its own:
-
-- dependencies
-- ESLint configuration
-- TypeScript project
-- browser-oriented development workflow
-- independent build lifecycle
-
-### `multi-webview`
-
-Use this when one extension contains several related webviews.
-
-```text
-multi-webview/
-└── src/
-    ├── extension/
-    ├── shared/
-    └── webviews/
-        ├── dashboard/
-        ├── settings/
-        └── shared/
-```
-
-The example demonstrates:
-
-- multiple Vite entry points
-- reusable webview panel creation
-- shared message contracts
-- shared VS Code API wrapper
-- browser preview shim
-- private `--webview-*` theme tokens
-- shared CSS plus per-webview CSS
-
-This is the best starting point when multiple views belong to the same extension and should reuse the same React infrastructure.
-
-### `scaffold`
-
-This package keeps a more generator-oriented project shape.
-
-Use it as a reference when you want to compare the template architecture with a conventional VS Code extension scaffold before applying the Vite/webview patterns.
-
-## Browser preview
-
-The Vite-based templates include browser-preview patterns so React UI work does not require reopening a VS Code webview for every change.
-
-The shared wrapper chooses between:
-
-```text
-inside VS Code
-→ acquireVsCodeApi()
-
-normal browser
-→ preview shim
-```
-
-The shim is only for frontend development. Real VS Code API behavior still has to be verified in the Extension Development Host.
-
-## Theme model
-
-The React components use application-owned CSS variables such as:
-
-```css
---webview-background
---webview-foreground
---webview-button-background
-```
-
-The shared CSS maps VS Code theme variables into those tokens when available and provides normal-browser defaults otherwise.
-
-```text
-React component
-→ --webview-* token
-→ browser default
-   or
-→ VS Code --vscode-* value
-```
-
-This keeps reusable components independent from the host environment.
-
-## Adding another template
-
-Add a self-contained package under:
-
-```text
-packages/<template-name>/
-```
-
-Give it a unique package name and its own README.
-
-The root workspace discovers it automatically through `packages/*`.
-
-If the package defines `build`, `typecheck`, `lint`, or `test`, the root workspace runner will include it in the corresponding repository-wide command.
-
-## Package names
-
-```text
-react-webview-vite-single-webview
-react-webview-vite-separate-webview-ui
-react-webview-vite-multi-webview
-react-webview-vite-scaffold
-```
-
-All template packages are private examples; the names exist to make npm workspace selection predictable and unambiguous.
+Start with **[Single Webview](./packages/single-webview/README.md)** and build from there.
