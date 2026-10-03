@@ -53,10 +53,11 @@
     "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
     "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
     "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts",
-    "dev": "npm run watch",
+    "dev": "concurrently -k -n extension,webview,browser \"npm run watch:extension\" \"npm run watch:webview\" \"npm run dev:browser\"",
     "dev:extension": "node ./scripts/run-extension-dev.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.webview.json",
-    "lint": "eslint src"
+    "lint": "eslint src",
+    "dev:browser": "vite --config vite.webview.config.ts --host 127.0.0.1 --open /webview-preview.html"
   },
   "devDependencies": {
     "@tailwindcss/vite": "^4.3.0",
