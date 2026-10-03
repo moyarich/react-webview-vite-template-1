@@ -1,0 +1,56 @@
+---
+title: Workspace Conventions
+label: Workspaces
+---
+
+# Workspace Conventions
+
+Every template package lives directly under:
+
+```text
+packages/*
+```
+
+Each workspace must have a unique package name.
+
+Current names:
+
+```text
+react-webview-vite-single-webview
+react-webview-vite-separate-webview-ui
+react-webview-vite-multi-webview
+react-webview-vite-scaffold
+```
+
+## Root scripts
+
+The common repository-wide scripts use npm workspace execution:
+
+```json
+{
+  "build": "npm run build --workspaces --if-present",
+  "typecheck": "npm run typecheck --workspaces --if-present",
+  "lint": "npm run lint --workspaces --if-present",
+  "test": "npm test --workspaces --if-present"
+}
+```
+
+A package may omit a script it does not support.
+
+## Lockfiles
+
+The root workspace owns the npm workspace lockfile.
+
+Do not keep package-level root lockfiles under:
+
+```text
+packages/<name>/package-lock.json
+```
+
+A nested application such as:
+
+```text
+packages/separate-webview-ui/webview-ui/
+```
+
+may keep its own lockfile when it is intentionally installed as an independent npm application.
