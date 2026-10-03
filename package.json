@@ -10,7 +10,7 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "workspaces:run": "run-workspaces",
+    "workspaces:run": "node ./scripts/run-workspaces.mjs",
     "dev:single": "npm run dev --workspace react-webview-vite-single-webview",
     "dev:separate-ui": "npm run dev --workspace react-webview-vite-separate-webview-ui",
     "dev:multi": "npm run dev --workspace react-webview-vite-multi-webview",
@@ -18,5 +18,9 @@
   },
   "bin": {
     "run-workspaces": "./scripts/run-workspaces.mjs"
+  },
+  "devDependencies": {
+    "commander": "^15.0.0",
+    "fzf": "^0.5.2"
   }
 }
