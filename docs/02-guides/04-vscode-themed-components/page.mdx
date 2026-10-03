@@ -1,0 +1,47 @@
+---
+title: VS Code-Themed Components
+label: VS Code-Themed Components
+---
+
+# VS Code-Themed Components
+
+The browser UI uses Tailwind for layout and VS Code theme variables for colors.
+
+The stylesheet starts with:
+
+```css
+@import "tailwindcss";
+```
+
+VS Code injects variables such as:
+
+```css
+var(--vscode-editor-background)
+var(--vscode-foreground)
+var(--vscode-descriptionForeground)
+var(--vscode-panel-border)
+var(--vscode-button-background)
+var(--vscode-button-foreground)
+var(--vscode-button-hoverBackground)
+```
+
+The React components can use those values directly through Tailwind arbitrary values.
+
+Example:
+
+```tsx
+<button
+  className="
+    bg-[var(--vscode-button-background)]
+    text-[var(--vscode-button-foreground)]
+    hover:bg-[var(--vscode-button-hoverBackground)]
+  "
+>
+```
+
+The example keeps the component layer intentionally small:
+
+- `VSCodeButton`
+- `VSCodeCard`
+
+This demonstrates the pattern without introducing a large design system.
