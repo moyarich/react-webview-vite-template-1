@@ -5,14 +5,15 @@ label: Troubleshooting
 
 # Troubleshooting
 
-## The panel is blank
+## A panel is blank
 
 Confirm the build generated:
 
 ```text
 dist/extension.js
-dist/webview/webview.js
-dist/webview/webview.css
+dist/webviews/dashboard.js
+dist/webviews/settings.js
+dist/webviews/webview.css
 ```
 
 Then open:
@@ -23,58 +24,64 @@ Developer: Toggle Developer Tools
 
 and inspect the console.
 
+## One webview works and another does not
+
+Check that its ID is present in all required places:
+
+```text
+WebviewId
+Vite input
+WEBVIEWS definition
+command registration
+package.json contribution
+```
+
+Also verify that the entry name matches the generated `dist/webviews/<entry>.js` file.
+
 ## JavaScript is blocked
 
-Confirm the panel enables scripts:
+Confirm:
 
 ```ts
 enableScripts: true
 ```
 
-Also verify that the script nonce matches the nonce declared by the Content Security Policy.
+and verify that the script nonce matches the Content Security Policy.
 
 ## CSS or JavaScript cannot load
 
-Check all three:
+Check:
 
 ```text
 localResourceRoots
 webview.asWebviewUri(...)
-actual Vite output paths
+dist/webviews/*
 ```
 
-The example allows local resources only from:
+The panel factory allows local resources from:
 
 ```text
-dist/webview
+dist/webviews
 ```
 
 ## React cannot import vscode
 
 That is expected.
 
-The `vscode` module exists in the extension host, not the webview browser.
+The `vscode` module only exists in the extension host. Browser code communicates through the shared `acquireVsCodeApi()` wrapper.
 
-Send a message from React to `src/extension.ts` and call the VS Code API there.
+## Browser preview behaves differently
 
-## F5 opens VS Code but the webview is missing assets
+The browser preview uses a shim. It can simulate message flow but cannot call real VS Code APIs.
 
-The checked-in launch configuration uses the root build task before starting the Extension Development Host.
+Use the Extension Development Host to verify host-specific behavior.
 
-Run the build manually to inspect errors:
+## The code command is not available
 
-```bash
-npm run build
-```
-
-## The `code` command is not available
-
-The terminal launcher uses `code` by default.
-
-Set `CODE_COMMAND` to another executable:
+Set:
 
 ```bash
 CODE_COMMAND=code-insiders npm run dev:extension
 ```
 
-You can always use VS Code's built-in `F5` workflow instead.
+or use the checked-in `F5` launch configuration.
