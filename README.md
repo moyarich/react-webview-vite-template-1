@@ -1,17 +1,41 @@
 # Build a VS Code Webview with React, Vite, Tailwind CSS, and VS Code-Themed Components
 
-This repository is a **small, runnable teaching example** for building a VS Code webview with React.
+The first version of this tutorial worked.
 
-It intentionally uses:
+It also ended up teaching more architecture than it needed to.
 
-- one `package.json`
-- one lockfile
-- one `src/` tree
-- Vite for both the extension host and the webview
-- Tailwind CSS for layout
-- VS Code CSS variables for theme-aware components
+I had a VS Code extension at the root, a separate Vite app in `webview-ui/`, two package files, two dependency installs, different build commands, and enough demo state that the actual webview model was getting buried.
 
-The example does one complete round trip:
+So I rebuilt the example around one question:
+
+> What is the smallest project that clearly shows how a React webview and a VS Code extension talk to each other?
+
+The result is a much simpler setup:
+
+```text
+one package.json
+one package-lock.json
+one src/ tree
+two Vite configs
+two runtimes
+one message round trip
+```
+
+In this post, I'll build that version.
+
+The complete runnable example is in:
+
+**https://github.com/moyarich/react-webview-vite-template-1**
+
+---
+
+## What we're building
+
+The UI is intentionally boring.
+
+There is one React button.
+
+When you click it:
 
 ```text
 React button
@@ -22,50 +46,24 @@ VS Code extension
     ↓
 showInformationMessage(...)
     ↓
-panel.webview.postMessage(...)
+extension postMessage(...)
     ↓
 React updates its status
 ```
 
-That is the core pattern behind settings screens, inspectors, dashboards, visual editors, and other rich VS Code webviews.
+That's enough to teach the important part.
 
-## Run it first
-
-Clone or download the repository, then run:
-
-```bash
-npm install
-```
-
-Open the project in VS Code and press:
-
-```text
-F5
-```
-
-The included launch configuration runs `npm run build` before starting the Extension Development Host, so both the extension and the React webview are built automatically.
-
-In the new VS Code window, open the Command Palette and run:
-
-```text
-Open React Webview
-```
-
-Click **Send message to VS Code**.
-
-VS Code shows a notification and the React UI changes its status to:
-
-```text
-VS Code received the message.
-```
-
-You now know that communication works in both directions.
+Once that flow is clear, a settings screen, inspector, dashboard, visual editor, or custom tool is just a larger version of the same architecture.
 
 ---
 
-## The most important idea: two runtimes
+## Start with the mental model, not the framework
 
-A webview extension contains two programs.
+The most useful thing to understand about a VS Code webview is that you are building **two applications that happen to live in the same extension**.
+
+One runs in the VS Code extension host.
+
+The other runs in a browser.
 
 ```text
 Extension host                         Webview
@@ -78,54 +76,76 @@ No browser DOM                         No direct VS Code API
         └────────── messages ──────────────┘
 ```
 
-The extension can call:
+This explains most of the weirdness people hit when they first build a webview.
+
+The extension can do this:
 
 ```ts
 vscode.window.showInformationMessage("Hello");
 ```
 
-The React webview cannot import and use the VS Code API directly.
+React cannot.
 
-Instead:
+React is running in an isolated browser context.
 
-```text
-React owns the UI.
-The extension owns VS Code APIs.
-Messages connect them.
-```
+So instead of calling VS Code APIs directly, React sends a message to the extension host. The extension does the VS Code-specific work and can send a message back.
 
-That boundary explains the architecture of the entire project.
+That boundary is the architecture.
+
+React and Vite are just implementation details on top of it.
 
 ---
 
-## Project structure
+## I prefer one package for this kind of extension
 
-The important files are:
+My earlier setup had a nested frontend project:
 
 ```text
-react-webview-vite-template-1/
-├── package.json
-├── package-lock.json
-├── tsconfig.json
-├── tsconfig.webview.json
-├── vite.extension.config.ts
-├── vite.webview.config.ts
-├── scripts/
-│   └── run-extension-dev.mjs
-└── src/
-    ├── extension.ts
-    └── webview/
-        ├── App.tsx
-        ├── index.tsx
-        ├── index.css
-        ├── vscode.d.ts
-        ├── api/
-        │   └── vscode-api.ts
-        └── components/
-            └── vscode-ui.tsx
+src/
+  extension.ts
+
+webview-ui/
+  package.json
+  vite.config.ts
+  src/
 ```
 
-Both runtimes build into one `dist/` directory:
+That works, and for a separately deployed frontend it can make sense.
+
+For a webview that is simply part of one extension, though, I now prefer this:
+
+```text
+src/
+├── extension.ts
+└── webview/
+    ├── App.tsx
+    ├── index.tsx
+    ├── index.css
+    ├── vscode.d.ts
+    ├── api/
+    │   └── vscode-api.ts
+    └── components/
+        └── vscode-ui.tsx
+
+vite.extension.config.ts
+vite.webview.config.ts
+tsconfig.json
+tsconfig.webview.json
+```
+
+Everything belongs to one product.
+
+There is one install:
+
+```bash
+npm install
+```
+
+One lockfile.
+
+One source tree.
+
+And one output directory:
 
 ```text
 dist/
@@ -135,55 +155,184 @@ dist/
     └── webview.css
 ```
 
-The build boundary is deliberately obvious:
-
-```text
-src/extension.ts
-    ↓ vite.extension.config.ts
-dist/extension.js
-
-src/webview/*
-    ↓ vite.webview.config.ts
-dist/webview/*
-```
+The two runtimes still stay separate. They just don't need separate npm projects.
 
 ---
 
-# 1. Register a VS Code command
+## Run the example before reading the rest
 
-The root `package.json` contributes one command:
+If you clone or download the repository:
+
+```bash
+npm install
+```
+
+Open it in VS Code and press:
+
+```text
+F5
+```
+
+The checked-in launch configuration runs the full build before opening the Extension Development Host.
+
+Then open the Command Palette and run:
+
+```text
+Open React Webview
+```
+
+Click:
+
+```text
+Send message to VS Code
+```
+
+You should get a native VS Code notification and then see the React status change to:
+
+```text
+VS Code received the message.
+```
+
+At that point, both sides of the architecture are working.
+
+---
+
+## Use Vite for both runtimes
+
+I like using the same build tool for the extension and the webview, but not the same build configuration.
+
+They run in different environments, so they need different outputs.
+
+The scripts are deliberately explicit:
 
 ```json
 {
-  "contributes": {
-    "commands": [
-      {
-        "command": "react-webview-vite.openPanel",
-        "title": "Open React Webview"
-      }
-    ]
-  }
+  "build": "vite build --config vite.extension.config.ts && vite build --config vite.webview.config.ts",
+  "build:extension": "vite build --config vite.extension.config.ts",
+  "build:webview": "vite build --config vite.webview.config.ts",
+  "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
+  "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
+  "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts"
 }
 ```
 
-The same ID is registered in `src/extension.ts`:
-
-```ts
-vscode.commands.registerCommand(
-  "react-webview-vite.openPanel",
-  () => {
-    // Open the webview.
-  },
-);
-```
-
-If a command does not appear or does nothing, check that these two IDs match.
+I find this much easier to reason about than hiding both builds behind one giant config.
 
 ---
 
-# 2. Create the webview panel
+## The extension build is a Node build
 
-The extension creates the panel with `createWebviewPanel`:
+The extension runs in VS Code's Node.js extension host.
+
+So `vite.extension.config.ts` looks more like a server build than a browser build:
+
+```ts
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  build: {
+    ssr: "src/extension.ts",
+    target: "node22",
+    outDir: "dist",
+    emptyOutDir: true,
+    rollupOptions: {
+      external: ["vscode"],
+      output: {
+        format: "cjs",
+        exports: "named",
+        entryFileNames: "extension.js",
+      },
+    },
+  },
+  ssr: {
+    noExternal: true,
+  },
+});
+```
+
+There are two important details here.
+
+First, the output is CommonJS because that is what the extension entry point expects.
+
+Second, `vscode` stays external:
+
+```ts
+external: ["vscode"]
+```
+
+You do not bundle the VS Code API.
+
+VS Code provides that module when the extension runs.
+
+The output is:
+
+```text
+dist/extension.js
+```
+
+and `package.json` points to it:
+
+```json
+{
+  "main": "./dist/extension.js"
+}
+```
+
+---
+
+## The webview build is a browser build
+
+The webview uses React and Tailwind, so its Vite config has a different job:
+
+```ts
+import react from "@vitejs/plugin-react";
+import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
+
+export default defineConfig(({ mode }) => ({
+  plugins: [react(), tailwindcss()],
+  build: {
+    target: "es2022",
+    outDir: "dist/webview",
+    emptyOutDir: false,
+    cssCodeSplit: false,
+    minify: mode === "production",
+    rollupOptions: {
+      input: "src/webview/index.tsx",
+      output: {
+        entryFileNames: "webview.js",
+        assetFileNames: (assetInfo) =>
+          assetInfo.name?.endsWith(".css")
+            ? "webview.css"
+            : "assets/[name]-[hash][extname]",
+        format: "iife",
+        inlineDynamicImports: true,
+      },
+    },
+  },
+}));
+```
+
+For a website, hashed filenames are great.
+
+For a tiny VS Code webview, I prefer predictable entry files:
+
+```text
+webview.js
+webview.css
+```
+
+That means the extension does not need a manifest or asset discovery step just to render one panel.
+
+---
+
+## The extension owns the HTML shell
+
+The React app does not need a normal `index.html` file in this setup.
+
+The extension creates the HTML because it also needs to control webview security and resource URLs.
+
+First, restrict local resources to the built webview directory:
 
 ```ts
 const webviewRoot = vscode.Uri.joinPath(
@@ -191,7 +340,11 @@ const webviewRoot = vscode.Uri.joinPath(
   "dist",
   "webview",
 );
+```
 
+Then create the panel:
+
+```ts
 const panel = vscode.window.createWebviewPanel(
   "reactWebviewVite",
   "React Webview",
@@ -203,20 +356,7 @@ const panel = vscode.window.createWebviewPanel(
 );
 ```
 
-Two options matter:
-
-- `enableScripts: true` lets the React JavaScript bundle execute.
-- `localResourceRoots` limits local file access to the built webview directory.
-
-The webview does not need access to the whole extension.
-
----
-
-# 3. Load Vite output safely
-
-A webview cannot load an ordinary filesystem path.
-
-Convert extension files with `webview.asWebviewUri(...)`:
+A webview cannot load an ordinary filesystem path, so convert the built files with `asWebviewUri`:
 
 ```ts
 const scriptUri = webview.asWebviewUri(
@@ -228,15 +368,7 @@ const styleUri = webview.asWebviewUri(
 );
 ```
 
-Think of that conversion as:
-
-```text
-extension file
-    ↓
-webview-safe URL
-```
-
-The HTML shell only needs a React root plus the built CSS and JavaScript:
+The final HTML shell is very small:
 
 ```html
 <body>
@@ -245,13 +377,17 @@ The HTML shell only needs a React root plus the built CSS and JavaScript:
 </body>
 ```
 
+React mounts into `#root` exactly as it would in a normal browser app.
+
 ---
 
-# 4. Use a Content Security Policy
+## Don't skip the Content Security Policy
 
-VS Code webviews are isolated browser surfaces.
+A webview is an isolated browser surface inside the editor.
 
-The example restricts resource loading with a CSP:
+Treat it like one.
+
+The example uses a restrictive CSP:
 
 ```html
 <meta
@@ -264,128 +400,21 @@ The example restricts resource loading with a CSP:
 />
 ```
 
-The script receives the matching nonce.
+The script tag gets the matching nonce.
 
-Do not fix a loading problem by broadly allowing arbitrary scripts or remote resources. Give the webview only the permissions it needs.
+The goal is not to make the policy complicated.
 
----
+The goal is to avoid fixing asset-loading problems by broadly enabling arbitrary scripts and remote resources.
 
-# 5. Build both runtimes with Vite
-
-This project uses two Vite configurations because the runtimes are different.
-
-## Extension build
-
-`vite.extension.config.ts` builds:
-
-```text
-src/extension.ts
-→ dist/extension.js
-```
-
-The extension runs in VS Code's Node.js extension host, so the configuration:
-
-- targets Node
-- emits CommonJS
-- keeps the `vscode` module external
-
-The important shape is:
-
-```ts
-build: {
-  ssr: "src/extension.ts",
-  target: "node22",
-  outDir: "dist",
-  rollupOptions: {
-    external: ["vscode"],
-    output: {
-      format: "cjs",
-      entryFileNames: "extension.js",
-    },
-  },
-},
-```
-
-VS Code supplies the `vscode` module at runtime, so it should not be bundled.
-
-## Webview build
-
-`vite.webview.config.ts` builds:
-
-```text
-src/webview/index.tsx
-→ dist/webview/webview.js
-→ dist/webview/webview.css
-```
-
-The webview is a browser application, so this config uses React and Tailwind:
-
-```ts
-plugins: [react(), tailwindcss()]
-```
-
-It also uses predictable output names:
-
-```ts
-entryFileNames: "webview.js"
-```
-
-and a single JavaScript entry:
-
-```ts
-format: "iife",
-inlineDynamicImports: true
-```
-
-For a small VS Code webview, predictable files make the extension-side HTML much easier to understand than hashed website assets.
+Give the webview exactly what it needs.
 
 ---
 
-# 6. Why there are two TypeScript configs
+## Tailwind for layout, VS Code variables for color
 
-The extension and webview do not have the same globals.
+I like Tailwind in webviews, but I do not want my extension to look like a random website embedded in VS Code.
 
-The extension needs Node and VS Code types.
-
-The webview needs browser DOM and React types.
-
-The root `tsconfig.json` excludes:
-
-```text
-src/webview/**
-```
-
-while `tsconfig.webview.json` includes the browser-specific files and:
-
-```json
-{
-  "lib": ["ES2022", "DOM"],
-  "jsx": "react-jsx",
-  "moduleResolution": "bundler"
-}
-```
-
-This prevents accidentally treating browser code as extension-host code.
-
-Run both checks with:
-
-```bash
-npm run typecheck
-```
-
----
-
-# 7. Add Tailwind without hard-coding a theme
-
-The webview CSS starts with:
-
-```css
-@import "tailwindcss";
-```
-
-Tailwind handles layout and spacing.
-
-VS Code provides CSS variables for the active theme:
+VS Code exposes theme values as CSS variables:
 
 ```css
 var(--vscode-editor-background)
@@ -397,42 +426,51 @@ var(--vscode-button-foreground)
 var(--vscode-button-hoverBackground)
 ```
 
-Instead of:
+So instead of hard-coding:
 
 ```tsx
 <button className="bg-blue-600 text-white">
 ```
 
-the example uses:
+I can use Tailwind's arbitrary values with VS Code's theme tokens:
 
 ```tsx
 <button
   className="
+    rounded
     bg-[var(--vscode-button-background)]
+    px-3
+    py-2
     text-[var(--vscode-button-foreground)]
     hover:bg-[var(--vscode-button-hoverBackground)]
   "
 >
 ```
 
-Now the button follows light, dark, and custom VS Code themes automatically.
+That gives me Tailwind's composition model without fighting the editor theme.
 
-The example intentionally contains only two themed components:
+The tutorial only includes two wrappers:
 
 ```text
 VSCodeButton
 VSCodeCard
 ```
 
-A teaching project does not need a design system before it can explain a webview.
+That's enough.
+
+A hello-world example does not need a component library.
 
 ---
 
-# 8. Send a message from React to VS Code
+## Now the important part: React → extension
 
-VS Code provides `acquireVsCodeApi()` inside the webview.
+Inside the webview, VS Code exposes:
 
-TypeScript needs a small declaration for it:
+```ts
+acquireVsCodeApi()
+```
+
+TypeScript does not know that global automatically, so the example declares only the piece it uses:
 
 ```ts
 type VSCodeApi = {
@@ -442,9 +480,14 @@ type VSCodeApi = {
 declare function acquireVsCodeApi(): VSCodeApi;
 ```
 
-The wrapper in `src/webview/api/vscode-api.ts` gets that API once:
+Then the wrapper is tiny:
 
 ```ts
+export type WebviewMessage = {
+  type: "showMessage";
+  message: string;
+};
+
 const vscode = acquireVsCodeApi();
 
 export function postMessage(message: WebviewMessage) {
@@ -452,7 +495,7 @@ export function postMessage(message: WebviewMessage) {
 }
 ```
 
-The React button sends:
+The button sends:
 
 ```tsx
 postMessage({
@@ -461,37 +504,27 @@ postMessage({
 });
 ```
 
-The browser has now sent data across the runtime boundary.
+That's the browser side done.
 
 ---
 
-# 9. Receive the message in the extension
+## Extension → VS Code → React
 
-The extension listens with:
+The extension listens for that message:
 
 ```ts
-panel.webview.onDidReceiveMessage(async (message) => {
-  // Handle messages from React.
+panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+  if (message.type !== "showMessage") {
+    return;
+  }
+
+  await vscode.window.showInformationMessage(message.message);
 });
 ```
 
-For this example:
+This is the correct place to call a VS Code API.
 
-```ts
-if (message.type !== "showMessage") {
-  return;
-}
-
-await vscode.window.showInformationMessage(message.message);
-```
-
-That VS Code API call belongs in the extension host, not in React.
-
----
-
-# 10. Send a response back to React
-
-The extension replies:
+After showing the notification, the extension sends a response back:
 
 ```ts
 await panel.webview.postMessage({
@@ -500,7 +533,7 @@ await panel.webview.postMessage({
 });
 ```
 
-React listens for browser message events:
+React listens for browser `message` events:
 
 ```ts
 useEffect(() => {
@@ -516,230 +549,120 @@ useEffect(() => {
 }, []);
 ```
 
-The complete flow is:
+And that's the complete bridge.
 
-```text
-React
-  │
-  │ postMessage
-  ▼
-Extension host
-  │
-  │ VS Code API
-  │
-  │ panel.webview.postMessage
-  ▼
-React
-```
+No settings model.
 
-Once that makes sense, most larger webview applications are extensions of the same pattern.
+No persistence layer.
+
+No unrelated demo state.
+
+Just the architecture.
 
 ---
 
-# Build and development commands
+## Development is now one command too
 
-All commands run from the repository root.
-
-## Build everything
-
-```bash
-npm run build
-```
-
-Equivalent to:
-
-```bash
-npm run build:extension
-npm run build:webview
-```
-
-The scripts are intentionally explicit:
-
-```json
-{
-  "build": "vite build --config vite.extension.config.ts && vite build --config vite.webview.config.ts",
-  "build:extension": "vite build --config vite.extension.config.ts",
-  "build:webview": "vite build --config vite.webview.config.ts"
-}
-```
-
-## Watch both runtimes
+To watch both runtimes:
 
 ```bash
 npm run watch
 ```
 
-This runs:
-
-```text
-extension → Vite watch → dist/extension.js
-webview   → Vite watch → dist/webview/*
-```
-
-The scripts are:
-
-```json
-{
-  "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
-  "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
-  "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts"
-}
-```
-
-`npm run dev` is an alias for `npm run watch`.
-
----
-
-# Two ways to launch the extension
-
-## Beginner path: F5
-
-After:
+or:
 
 ```bash
-npm install
+npm run dev
 ```
 
-press `F5`.
+That runs the extension and webview Vite builds side by side.
 
-The checked-in VS Code launch configuration runs:
+For most people learning the project, I still recommend `F5` because VS Code already understands extension debugging.
 
-```bash
-npm run build
-```
-
-before starting the Extension Development Host.
-
-This is the easiest path when learning.
-
-## Terminal path: dev:extension
-
-You can also launch the Extension Development Host from a terminal:
+If you prefer a terminal-driven workflow, the repo also includes:
 
 ```bash
-npm run build
 npm run dev:extension
 ```
 
-`dev:extension` runs:
+which launches:
 
 ```bash
-node ./scripts/run-extension-dev.mjs
-```
-
-The script launches the current repository with:
-
-```text
 code --extensionDevelopmentPath=...
 ```
 
-If your VS Code CLI command is not `code`, set:
+If you use VS Code Insiders:
 
 ```bash
 CODE_COMMAND=code-insiders npm run dev:extension
 ```
 
-Keep `F5` as the simplest learning workflow; use `dev:extension` when you want terminal-driven development.
+---
+
+## Why I like this version better
+
+The original version of this tutorial had more UI, more state, more files, and a separate frontend package.
+
+None of those choices were individually wrong.
+
+They just distracted from the thing I actually wanted to teach.
+
+The new version has a cleaner learning path:
+
+1. understand that there are two runtimes
+2. build each runtime with the correct Vite config
+3. load the browser assets safely
+4. use VS Code theme variables instead of inventing another theme
+5. send one message in each direction
+
+After that, add complexity because your extension needs it—not because the tutorial started with it.
 
 ---
 
-# Reloading during development
+## The full docs are now separate from the blog
 
-Start the watchers:
+I also split the reference material out of this article.
 
-```bash
-npm run watch
+The repository now has MoyaForge-compatible docs under:
+
+```text
+docs/
+├── page.mdx
+├── 01-getting-started/
+│   └── page.mdx
+├── 02-guides/
+│   ├── 01-architecture/
+│   │   └── page.mdx
+│   ├── 02-vite-builds/
+│   │   └── page.mdx
+│   ├── 03-webview-messaging/
+│   │   └── page.mdx
+│   └── 04-vscode-themed-components/
+│       └── page.mdx
+└── 03-reference/
+    ├── 01-scripts/
+    │   └── page.mdx
+    └── 02-troubleshooting/
+        └── page.mdx
 ```
 
-For React-only changes, close and reopen **Open React Webview**.
-
-For extension-host changes, reload the Extension Development Host:
-
-- macOS: `Cmd + R`
-- Windows/Linux: `Ctrl + R`
+That lets the README stay readable as a post while the repository still has proper reference documentation.
 
 ---
 
-# Common problems
+## Final mental model
 
-## The panel is blank
-
-Confirm the build produced:
-
-```text
-dist/extension.js
-dist/webview/webview.js
-dist/webview/webview.css
-```
-
-Then run:
-
-```text
-Developer: Toggle Developer Tools
-```
-
-and inspect the console.
-
-## JavaScript is blocked
-
-Confirm:
-
-```ts
-enableScripts: true
-```
-
-and verify that the script nonce matches the nonce in the CSP.
-
-## CSS or JavaScript cannot load
-
-Check:
-
-```text
-localResourceRoots
-webview.asWebviewUri(...)
-actual Vite output paths
-```
-
-## React cannot call vscode.window
-
-That is expected.
-
-React runs in a browser context.
-
-Send a message to `src/extension.ts` and call the VS Code API there.
-
----
-
-# Why the example stays small
-
-The point of this repository is not to demonstrate a complete application.
-
-It teaches seven pieces:
-
-1. register a command
-2. create a webview
-3. build both runtimes with Vite
-4. load the generated webview assets safely
-5. style React with Tailwind and VS Code theme variables
-6. send React → extension messages
-7. send extension → React messages
-
-Everything else can be added after this architecture is understood.
-
-Useful next steps for a real extension include:
-
-- shared typed message contracts
-- persisted webview state
-- VS Code configuration APIs
-- routing
-- multiple webview views
-- richer component primitives
-
-## Minimal mental model
+If you remember only this, you're in good shape:
 
 ```text
 React owns the UI.
-VS Code extension owns VS Code APIs.
+VS Code owns the editor APIs.
 Vite builds both runtimes.
 Messages connect them.
 ```
+
+The runnable source is here:
+
+**https://github.com/moyarich/react-webview-vite-template-1**
+
+And the deeper implementation notes live in the repository's `docs/` directory.
