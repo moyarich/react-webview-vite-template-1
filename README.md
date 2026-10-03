@@ -1141,9 +1141,9 @@ npm run dev
 
 This starts the development processes and opens the React UI in a normal browser automatically.
 
-### Browser preview
+### Preview
 
-The browser preview runs through Vite and uses the preview shim instead of the real VS Code webview API.
+The preview runs through Vite and uses the preview shim instead of the real VS Code webview API.
 
 That means this interaction works in the browser:
 
@@ -1154,7 +1154,7 @@ React button
 → React status update
 ```
 
-The browser preview is useful for fast UI work because you can edit React and see changes without reopening a VS Code webview.
+The preview is useful for fast UI work because you can edit React and see changes without reopening a VS Code webview.
 
 ### VS Code webview
 
