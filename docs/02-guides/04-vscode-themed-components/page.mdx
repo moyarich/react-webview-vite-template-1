@@ -1,0 +1,59 @@
+---
+title: VS Code-Themed Components
+label: VS Code-Themed Components
+---
+
+# VS Code-Themed Components
+
+Tailwind handles layout and spacing. VS Code theme variables provide the colors.
+
+The webview stylesheet starts with:
+
+```css
+@import "tailwindcss";
+```
+
+## Use VS Code variables instead of fixed colors
+
+VS Code injects CSS variables such as:
+
+```css
+var(--vscode-editor-background)
+var(--vscode-foreground)
+var(--vscode-descriptionForeground)
+var(--vscode-panel-border)
+var(--vscode-button-background)
+var(--vscode-button-foreground)
+var(--vscode-button-hoverBackground)
+```
+
+Instead of:
+
+```tsx
+<button className="bg-blue-600 text-white">
+```
+
+use:
+
+```tsx
+<button
+  className="
+    bg-[var(--vscode-button-background)]
+    text-[var(--vscode-button-foreground)]
+    hover:bg-[var(--vscode-button-hoverBackground)]
+  "
+>
+```
+
+The component will follow the user's active VS Code theme.
+
+## Keep the component layer small
+
+The tutorial contains only:
+
+- `VSCodeButton`
+- `VSCodeCard`
+
+That is enough to demonstrate the pattern without turning the example into a design-system project.
+
+As an extension grows, add wrappers only where they improve reuse, consistency, or accessibility.

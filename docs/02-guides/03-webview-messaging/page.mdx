@@ -1,0 +1,89 @@
+---
+title: Webview Messaging
+label: Webview Messaging
+---
+
+# Webview Messaging
+
+The example intentionally uses one message in each direction.
+
+## React to extension
+
+VS Code provides `acquireVsCodeApi()` inside the webview.
+
+The project declares only the API it needs in `src/webview/vscode.d.ts`:
+
+```ts
+type VSCodeApi = {
+  postMessage: (message: unknown) => void;
+};
+
+declare function acquireVsCodeApi(): VSCodeApi;
+```
+
+The wrapper in `src/webview/api/vscode-api.ts` acquires the API once:
+
+```ts
+const vscode = acquireVsCodeApi();
+
+export function postMessage(message: WebviewMessage) {
+  vscode.postMessage(message);
+}
+```
+
+React sends:
+
+```ts
+postMessage({
+  type: "showMessage",
+  message: "Hello from the React webview!",
+});
+```
+
+## Extension receives the message
+
+The extension listens with:
+
+```ts
+panel.webview.onDidReceiveMessage(async (message) => {
+  if (message.type !== "showMessage") {
+    return;
+  }
+
+  await vscode.window.showInformationMessage(message.message);
+});
+```
+
+The VS Code API call belongs here because this code runs in the extension host.
+
+## Extension to React
+
+The extension replies:
+
+```ts
+await panel.webview.postMessage({
+  type: "messageShown",
+  message: "VS Code received the message.",
+});
+```
+
+React listens with a browser message event:
+
+```ts
+useEffect(() => {
+  const handleMessage = (event: MessageEvent<ExtensionMessage>) => {
+    if (event.data.type === "messageShown") {
+      setStatus(event.data.message);
+    }
+  };
+
+  window.addEventListener("message", handleMessage);
+  return () => window.removeEventListener("message", handleMessage);
+}, []);
+```
+
+## When the project grows
+
+For a larger extension, move message types into a shared module so both runtimes import the same contract.
+
+The small tutorial keeps the types local so the basic flow stays visible.

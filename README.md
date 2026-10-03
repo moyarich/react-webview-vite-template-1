@@ -1,30 +1,43 @@
 # Build a VS Code Webview with React, Vite, Tailwind CSS, and VS Code-Themed Components
 
-This tutorial shows how to create a VS Code extension that opens a custom webview powered by:
+This tutorial shows how to build a VS Code extension that opens a custom React interface inside the editor.
+
+We will use:
 
 - **React** for the webview UI
-- **Vite** for fast frontend builds
-- **Tailwind CSS** for layout and custom styling
-- **VS Code CSS theme variables** for native-looking controls
-- **VS Code Webview API** for rendering the UI inside VS Code
+- **Vite** to build both the extension and the webview
+- **Tailwind CSS** for layout and styling
+- **VS Code theme variables** so the UI follows the user's editor theme
+- **VS Code webview messaging** so React and the extension can talk to each other
+
+You do not need previous VS Code extension experience to follow along.
+
+By the end, you will have a command called **Open React Webview** that opens a React panel. Clicking a button in React will send a message to the extension, the extension will show a native VS Code notification, and then send a response back to React.
+
+The complete source is available here:
+
+**https://github.com/moyarich/react-webview-vite-template-1**
 
 ---
 
 ## 1. Prerequisites
 
-Install Node.js and npm first.
+Make sure you have:
 
-Then install the VS Code extension generator:
+- Node.js and npm
+- VS Code
+
+To create a new extension from scratch, install the official VS Code extension generator:
 
 ```bash
 npm install --global yo generator-code
 ```
 
-You should also have VS Code installed.
+The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension.ts`.
 
 ---
 
-## 2. Create the VS Code Extension
+## 2. Create a TypeScript VS Code extension
 
 Run:
 
@@ -32,145 +45,329 @@ Run:
 yo code
 ```
 
-Choose these options:
+Choose:
 
 ```text
-✔ What type of extension do you want to create? New Extension (TypeScript)
-✔ What's the name of your extension? react-webview-vite
-✔ What's the identifier of your extension? react-webview-vite
-✔ What's the description of your extension? webview
-✔ Initialize a git repository? Yes
-✔ Which bundler to use? unbundled
-✔ Which package manager to use? npm
+What type of extension do you want to create?
+→ New Extension (TypeScript)
+
+What's the name of your extension?
+→ react-webview-vite
+
+What's the identifier of your extension?
+→ react-webview-vite
+
+Which bundler to use?
+→ unbundled
+
+Which package manager to use?
+→ npm
 ```
 
-This creates the extension shell where the important files are:
+Open the generated folder in VS Code.
+
+The important files are:
 
 ```text
 react-webview-vite/
-  package.json
-  src/
-    extension.ts
-  tsconfig.json
+├── package.json
+├── tsconfig.json
+└── src/
+    └── extension.ts
 ```
 
-Update the extension root `tsconfig.json` so the extension compiler only reads files from `src/` and does not accidentally compile the Vite React app inside `webview-ui`.
+At this point you have a normal VS Code extension, but no React UI yet.
+
+---
+
+## 3. Understand the two parts of the extension
+
+Before adding React, it helps to understand where the code will run.
+
+A VS Code extension with a webview has **two runtimes**.
+
+```text
+Extension host                         Webview
+--------------                         -------
+Node.js                                Browser
+src/extension.ts                       src/webview/*
+VS Code API available                  React + DOM available
+No browser DOM                         No direct VS Code API
+        │                                  │
+        └────────── messages ──────────────┘
+```
+
+### The extension host
+
+`src/extension.ts` runs in VS Code's extension host.
+
+This code can use APIs such as:
+
+```ts
+vscode.window.showInformationMessage("Hello");
+```
+
+### The webview
+
+The webview is an isolated browser page displayed inside VS Code.
+
+This is where React runs.
+
+React can use the DOM and browser APIs, but it cannot directly do this:
+
+```ts
+vscode.window.showInformationMessage("Hello");
+```
+
+Instead, React sends a message to the extension.
+
+The extension performs the VS Code-specific action and can send a message back.
+
+Keep this model in mind as we build both sides.
+
+---
+
+## 4. Install React, Vite, and Tailwind
+
+We will keep the extension and webview in one npm package.
+
+From the extension root, install:
+
+```bash
+npm install -D vite @vitejs/plugin-react @tailwindcss/vite tailwindcss concurrently
+npm install react react-dom
+npm install -D @types/react @types/react-dom
+```
+
+Our project will eventually look like this:
+
+```text
+react-webview-vite/
+├── package.json
+├── tsconfig.json
+├── tsconfig.webview.json
+├── vite.extension.config.ts
+├── vite.webview.config.ts
+└── src/
+    ├── extension.ts
+    └── webview/
+        ├── App.tsx
+        ├── index.tsx
+        ├── index.css
+        ├── vscode.d.ts
+        ├── api/
+        │   └── vscode-api.ts
+        └── components/
+            └── vscode-ui.tsx
+```
+
+There is still only one application package and one `node_modules` directory.
+
+The two runtimes are separated by their source folders and build configurations.
+
+---
+
+## 5. Build the extension with Vite
+
+Create:
+
+```text
+vite.extension.config.ts
+```
+
+Add:
+
+```ts
+import { defineConfig } from "vite";
+
+export default defineConfig({
+  build: {
+    ssr: "src/extension.ts",
+    target: "node22",
+    outDir: "dist",
+    emptyOutDir: true,
+    rollupOptions: {
+      external: ["vscode"],
+      output: {
+        format: "cjs",
+        exports: "named",
+        entryFileNames: "extension.js",
+      },
+    },
+  },
+  ssr: {
+    noExternal: true,
+  },
+});
+```
+
+This config builds the Node side of the extension.
+
+The important part is:
+
+```ts
+external: ["vscode"]
+```
+
+The `vscode` module is provided by VS Code at runtime, so it should not be bundled into our extension.
+
+The output will be:
+
+```text
+dist/extension.js
+```
+
+Update the extension's root `package.json` so VS Code knows where the compiled extension entry point is:
 
 ```json
 {
-  "compilerOptions": {
-    "module": "Node16",
-    "target": "ES2022",
-    "outDir": "out",
-    "lib": ["ES2022"],
-    "sourceMap": true,
-    "rootDir": "src",
-    "strict": true
-  },
-  "exclude": ["webview-ui"]
+  "main": "./dist/extension.js"
 }
 ```
 
 ---
 
-## 3. Run the Extension for the First Time
+## 6. Create the React webview entry point
 
-Open the generated extension in VS Code. click on `src/extension.ts`
-
-Press:
+Create this folder:
 
 ```text
-F5
+src/webview/
 ```
 
-This starts the extension in a new window called the **Extension Development Host**.
+Then create:
 
-In that new window:
+```text
+src/webview/index.tsx
+```
 
-1. Open the Command Palette:
-   - **Windows:** `Ctrl + Shift + P`
-   - **macOS:** `Cmd + Shift + P`
+Add:
 
-2. Run: `Hello World`
+```tsx
+import { StrictMode } from "react";
+import { createRoot } from "react-dom/client";
+import "./index.css";
+import App from "./App";
 
-You should see the extension message: `Hello World from react-webview-vite!`
+createRoot(document.getElementById("root")!).render(
+  <StrictMode>
+    <App />
+  </StrictMode>,
+);
+```
 
-This confirms that the extension host works before adding React.
+This is the browser entry point.
+
+Later, the extension will create an HTML page containing:
+
+```html
+<div id="root"></div>
+```
+
+React will attach itself to that element.
 
 ---
 
-## 4. Add a React App with Vite
+## 7. Configure Vite for the webview
 
-From the extension root, run the command below to create a React + TypeScript app inside a folder named `webview-ui`:
-
-```bash
-npm create vite@latest webview-ui
-```
-
-Choose these options:
-
-```
-✔ Select a framework? React
-✔ Select a variant? TypeScript
-```
-
-Your project should now look like this:
+Create:
 
 ```text
-react-webview-vite/
-  src/
-    extension.ts
-  webview-ui/
-    index.html
-    package.json
-    src/
-      App.tsx
-      main.tsx
-      index.css
-    vite.config.ts
+vite.webview.config.ts
 ```
 
----
-
-## 5. Install Tailwind CSS for Vite
-
-To install dependencies:
-
-```
-cd webview-ui
-
-```
-
-Inside `webview-ui`, install Tailwind using the Vite plugin:
-
-```bash
-npm install tailwindcss @tailwindcss/vite
-```
-
-Update `webview-ui/vite.config.ts`:
+Add:
 
 ```ts
-import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
+import { defineConfig } from "vite";
 
-export default defineConfig({
+export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: "dist",
-    emptyOutDir: true,
+    target: "es2022",
+    outDir: "dist/webview",
+    emptyOutDir: false,
+    cssCodeSplit: false,
+    minify: mode === "production",
     rollupOptions: {
+      input: "src/webview/index.tsx",
       output: {
-        entryFileNames: "assets/[name].js",
-        chunkFileNames: "assets/[name].js",
-        assetFileNames: "assets/[name].[ext]",
+        entryFileNames: "webview.js",
+        assetFileNames: (assetInfo) =>
+          assetInfo.name?.endsWith(".css")
+            ? "webview.css"
+            : "assets/[name]-[hash][extname]",
+        format: "iife",
+        inlineDynamicImports: true,
       },
     },
   },
-});
+}));
 ```
 
-Update `webview-ui/src/index.css`:
+This build is different from the extension build because it targets a browser instead of Node.js.
+
+It produces:
+
+```text
+dist/webview/
+├── webview.js
+└── webview.css
+```
+
+Using predictable filenames makes loading the assets from the extension straightforward.
+
+---
+
+## 8. Add the build scripts
+
+Update the `scripts` section of `package.json`:
+
+```json
+{
+  "scripts": {
+    "build": "vite build --config vite.extension.config.ts && vite build --config vite.webview.config.ts",
+    "build:extension": "vite build --config vite.extension.config.ts",
+    "build:webview": "vite build --config vite.webview.config.ts",
+    "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
+    "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
+    "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts",
+    "dev": "npm run watch"
+  }
+}
+```
+
+Now:
+
+```bash
+npm run build
+```
+
+builds both parts.
+
+You should see:
+
+```text
+dist/
+├── extension.js
+└── webview/
+    ├── webview.js
+    └── webview.css
+```
+
+---
+
+## 9. Add Tailwind and VS Code theme colors
+
+Create:
+
+```text
+src/webview/index.css
+```
+
+Add:
 
 ```css
 @import "tailwindcss";
@@ -185,36 +382,45 @@ body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  background: var(--vscode-editor-background);
   color: var(--vscode-foreground);
+  background: var(--vscode-editor-background);
 }
 
-button,
-input,
-textarea,
-select {
+button {
   font-family: inherit;
 }
 ```
 
-This setup keeps Tailwind available while still respecting VS Code theme variables.
+VS Code exposes theme values as CSS custom properties.
+
+Examples include:
+
+```css
+var(--vscode-editor-background)
+var(--vscode-foreground)
+var(--vscode-descriptionForeground)
+var(--vscode-panel-border)
+var(--vscode-button-background)
+var(--vscode-button-foreground)
+var(--vscode-button-hoverBackground)
+```
+
+That means we can use Tailwind for spacing and layout while letting VS Code control the colors.
 
 ---
 
-## 6. Create VS Code-Themed React Components
+## 10. Create a VS Code-themed button and card
 
-- Build regular React components.
-- Style them with Tailwind.
-- Optionally use headless libraries like [Radix UI](https://www.radix-ui.com/themes/docs/overview/getting-started) if you need advanced accessible primitives such as dialogs, popovers, tabs, or dropdown menus.
+Create:
 
-Create `webview-ui/src/components/vscode-ui.tsx`:
+```text
+src/webview/components/vscode-ui.tsx
+```
+
+Add:
 
 ```tsx
-import type {
-  ButtonHTMLAttributes,
-  InputHTMLAttributes,
-  TextareaHTMLAttributes,
-} from "react";
+import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 export function VSCodeButton({
   className = "",
@@ -222,251 +428,117 @@ export function VSCodeButton({
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded px-3 py-1.5 text-sm font-medium text-[var(--vscode-button-foreground)] bg-[var(--vscode-button-background)] hover:bg-[var(--vscode-button-hoverBackground)] focus:outline focus:outline-1 focus:outline-[var(--vscode-focusBorder)] ${className}`}
+      className={`rounded bg-[var(--vscode-button-background)] px-3 py-2 text-[var(--vscode-button-foreground)] hover:bg-[var(--vscode-button-hoverBackground)] ${className}`}
       {...props}
     />
   );
 }
 
-export function VSCodeSecondaryButton({
-  className = "",
-  ...props
-}: ButtonHTMLAttributes<HTMLButtonElement>) {
+export function VSCodeCard({ children }: { children: ReactNode }) {
   return (
-    <button
-      className={`rounded px-3 py-1.5 text-sm font-medium text-[var(--vscode-button-secondaryForeground)] bg-[var(--vscode-button-secondaryBackground)] hover:bg-[var(--vscode-button-secondaryHoverBackground)] focus:outline focus:outline-1 focus:outline-[var(--vscode-focusBorder)] ${className}`}
-      {...props}
-    />
-  );
-}
-
-export function VSCodeTextField({
-  className = "",
-  ...props
-}: InputHTMLAttributes<HTMLInputElement>) {
-  return (
-    <input
-      className={`w-full rounded border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm text-[var(--vscode-input-foreground)] placeholder:text-[var(--vscode-input-placeholderForeground)] focus:outline focus:outline-1 focus:outline-[var(--vscode-focusBorder)] ${className}`}
-      {...props}
-    />
-  );
-}
-
-export function VSCodeTextArea({
-  className = "",
-  ...props
-}: TextareaHTMLAttributes<HTMLTextAreaElement>) {
-  return (
-    <textarea
-      className={`min-h-24 w-full rounded border border-[var(--vscode-input-border)] bg-[var(--vscode-input-background)] px-3 py-2 text-sm text-[var(--vscode-input-foreground)] placeholder:text-[var(--vscode-input-placeholderForeground)] focus:outline focus:outline-1 focus:outline-[var(--vscode-focusBorder)] ${className}`}
-      {...props}
-    />
-  );
-}
-
-export function VSCodeCard({
-  className = "",
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <section
-      className={`rounded-xl border border-[var(--vscode-panel-border)] bg-[var(--vscode-sideBar-background)] p-5 shadow-sm ${className}`}
-    >
+    <section className="max-w-xl rounded border border-[var(--vscode-panel-border)] p-5">
       {children}
     </section>
   );
 }
 ```
 
-The UI intentionally combines Tailwind utility classes with VS Code CSS variables such as:
+Notice that these are normal React components.
 
-```
-var(--vscode-editor-background)
-var(--vscode-foreground)
-var(--vscode-descriptionForeground)
-var(--vscode-panel-border)
-var(--vscode-button-background)
-var(--vscode-input-background)
+The only VS Code-specific part is the use of VS Code's CSS variables.
+
+For example:
+
+```tsx
+bg-[var(--vscode-button-background)]
 ```
 
-That keeps the webview aligned with the active VS Code theme.
+This allows the button to follow the user's active VS Code theme.
 
 ---
 
-##
+## 11. Give React access to the webview messaging API
 
----
-
-## 7. Create the React Webview UI with VS Code API Messaging
-
-Create the React webview UI with VS Code message passing included from the start.
-
-A webview runs like a small web app, but it cannot directly call the VS Code extension API. Instead, the React app sends messages to the extension, and the extension runs VS Code APIs on its behalf.
-
-The flow looks like this:
-
-```text
-React button click
-  → webview postMessage
-  → extension receives message
-  → extension runs VS Code API
-  → extension sends response back to React
-  → React updates the UI
-```
-
-### Create the VS Code API wrapper
-
-Create `webview-ui/src/api/vscode-api.ts`:
+VS Code injects a function named:
 
 ```ts
-export type WebviewMessage =
-  | {
-      type: "saveSettings";
-      payload: {
-        projectName: string;
-        format: string;
-        notes: string;
-      };
-    }
-  | {
-      type: "showInfo";
-      payload: {
-        message: string;
-      };
-    };
-
-let vscodeApi: VSCodeApi | undefined;
-
-function getVsCodeApi() {
-  if (vscodeApi) {
-    return vscodeApi;
-  }
-
-  if (typeof acquireVsCodeApi === "function") {
-    vscodeApi = acquireVsCodeApi();
-    return vscodeApi;
-  }
-
-  return undefined;
-}
-
-export function postMessage(message: WebviewMessage) {
-  const vscode = getVsCodeApi();
-
-  if (!vscode) {
-    console.log("VS Code API is not available. Message was not sent:", message);
-    return;
-  }
-
-  vscode.postMessage(message);
-}
-
-export function getVsCodeState<T>() {
-  const vscode = getVsCodeApi();
-  return vscode?.getState<T>();
-}
-
-export function setVsCodeState<T>(state: T) {
-  const vscode = getVsCodeApi();
-  vscode?.setState(state);
-}
+acquireVsCodeApi()
 ```
 
-This wrapper is the only place where the React app should call `acquireVsCodeApi()`.
+inside the webview.
 
-The wrapper calls `acquireVsCodeApi()` lazily, only when the app needs to communicate with VS Code. This prevents the app from crashing during Vite browser development or testing.
+This gives the browser a small API for communicating with the extension.
 
-### Add webview API types for the wrapper
+TypeScript does not know this global exists, so create:
 
-Create `webview-ui/src/vscode.d.ts`:
+```text
+src/webview/vscode.d.ts
+```
+
+Add:
 
 ```ts
 type VSCodeApi = {
   postMessage: (message: unknown) => void;
-  getState: <T = unknown>() => T | undefined;
-  setState: <T = unknown>(state: T) => void;
 };
 
 declare function acquireVsCodeApi(): VSCodeApi;
 ```
 
-VS Code provides `acquireVsCodeApi()` inside the webview, but TypeScript does not know about it by default. This file adds the type information needed by `webview-ui/src/api/vscode-api.ts`.
+Now create:
 
-The wrapper checks `typeof acquireVsCodeApi === "function"` because the function only exists inside VS Code, not when previewing the React app in a normal browser.
+```text
+src/webview/api/vscode-api.ts
+```
 
-### Create `webview-ui/src/App.tsx`
+Add:
 
-Now create `webview-ui/src/App.tsx` :
+```ts
+export type WebviewMessage = {
+  type: "showMessage";
+  message: string;
+};
+
+const vscode = acquireVsCodeApi();
+
+export function postMessage(message: WebviewMessage) {
+  vscode.postMessage(message);
+}
+```
+
+The React app will use this wrapper whenever it needs to send something to the extension.
+
+---
+
+## 12. Create the React UI
+
+Create:
+
+```text
+src/webview/App.tsx
+```
+
+Add:
 
 ```tsx
 import { useEffect, useState } from "react";
-import {
-  VSCodeButton,
-  VSCodeCard,
-  VSCodeSecondaryButton,
-  VSCodeTextArea,
-  VSCodeTextField,
-} from "./components/vscode-ui";
-import { getVsCodeState, postMessage, setVsCodeState } from "./api/vscode-api";
+import { postMessage } from "./api/vscode-api";
+import { VSCodeButton, VSCodeCard } from "./components/vscode-ui";
 
-type AppState = {
-  projectName: string;
-  format: string;
-  notes: string;
+type ExtensionMessage = {
+  type: "messageShown";
+  message: string;
 };
 
-type ExtensionMessage =
-  | {
-      type: "settingsSaved";
-      payload: {
-        savedAt: string;
-      };
-    }
-  | {
-      type: "fromExtension";
-      payload: {
-        message: string;
-      };
-    };
-
-const defaultState: AppState = {
-  projectName: "Jupytext Pair Helper",
-  format: "ipynb,py:percent",
-  notes: "",
-};
-
-function App() {
-  const savedState = getVsCodeState<AppState>();
-
-  const [projectName, setProjectName] = useState(
-    savedState?.projectName ?? defaultState.projectName,
-  );
-  const [format, setFormat] = useState(
-    savedState?.format ?? defaultState.format,
-  );
-  const [notes, setNotes] = useState(savedState?.notes ?? defaultState.notes);
+export default function App() {
   const [status, setStatus] = useState("Ready");
 
   useEffect(() => {
-    setVsCodeState({ projectName, format, notes });
-  }, [projectName, format, notes]);
-
-  useEffect(() => {
-    function handleMessage(event: MessageEvent<ExtensionMessage>) {
-      const message = event.data;
-
-      switch (message.type) {
-        case "settingsSaved":
-          setStatus(`Settings saved at ${message.payload.savedAt}`);
-          break;
-        case "fromExtension":
-          setStatus(message.payload.message);
-          break;
+    const handleMessage = (event: MessageEvent<ExtensionMessage>) => {
+      if (event.data.type === "messageShown") {
+        setStatus(event.data.message);
       }
-    }
+    };
 
     window.addEventListener("message", handleMessage);
 
@@ -475,193 +547,62 @@ function App() {
     };
   }, []);
 
-  function saveSettings() {
-    postMessage({
-      type: "saveSettings",
-      payload: {
-        projectName,
-        format,
-        notes,
-      },
-    });
-  }
-
-  function showInfoMessage() {
-    postMessage({
-      type: "showInfo",
-      payload: {
-        message: `Current project: ${projectName}`,
-      },
-    });
-  }
-
-  function resetSettings() {
-    setProjectName(defaultState.projectName);
-    setFormat(defaultState.format);
-    setNotes(defaultState.notes);
-    setStatus(
-      "Reset locally. Click Save settings to send the update to VS Code.",
-    );
-  }
-
   return (
-    <main className="min-h-screen p-5">
-      <section className="mx-auto grid max-w-4xl gap-5">
-        <VSCodeCard>
-          <p className="text-xs uppercase tracking-wide text-[var(--vscode-descriptionForeground)]">
-            VS Code Webview Tutorial
-          </p>
-          <h1 className="mt-2 text-2xl font-semibold text-[var(--vscode-foreground)]">
-            React + Vite + Tailwind + VS Code Message Passing
-          </h1>
-          <p className="mt-2 max-w-2xl text-sm leading-6 text-[var(--vscode-descriptionForeground)]">
-            This webview uses React for state, Tailwind for layout, and VS Code
-            message passing to communicate with the extension.
-          </p>
-        </VSCodeCard>
+    <main className="p-6">
+      <VSCodeCard>
+        <h1 className="text-xl font-semibold">Hello from React</h1>
 
-        <div className="grid gap-5 md:grid-cols-2">
-          <VSCodeCard>
-            <h2 className="text-lg font-medium">Settings</h2>
-            <div className="mt-4 grid gap-4">
-              <label className="grid gap-1 text-sm">
-                <span className="text-[var(--vscode-descriptionForeground)]">
-                  Project name
-                </span>
-                <VSCodeTextField
-                  value={projectName}
-                  onChange={(event) => setProjectName(event.target.value)}
-                />
-              </label>
+        <p className="mt-2 text-[var(--vscode-descriptionForeground)]">
+          This UI is rendered by React inside a VS Code webview.
+        </p>
 
-              <label className="grid gap-1 text-sm">
-                <span className="text-[var(--vscode-descriptionForeground)]">
-                  Pairing format
-                </span>
-                <select
-                  value={format}
-                  onChange={(event) => setFormat(event.target.value)}
-                  className="w-full rounded border border-[var(--vscode-dropdown-border)] bg-[var(--vscode-dropdown-background)] px-3 py-2 text-sm text-[var(--vscode-dropdown-foreground)] focus:outline focus:outline-1 focus:outline-[var(--vscode-focusBorder)]"
-                >
-                  <option value="ipynb,py:percent">Python percent pair</option>
-                  <option value="ipynb,md:myst">Markdown MyST pair</option>
-                  <option value="ipynb,md,pct.py:percent">
-                    Notebook + Markdown + percent script
-                  </option>
-                </select>
-              </label>
+        <VSCodeButton
+          className="mt-4"
+          onClick={() =>
+            postMessage({
+              type: "showMessage",
+              message: "Hello from the React webview!",
+            })
+          }
+        >
+          Send message to VS Code
+        </VSCodeButton>
 
-              <label className="grid gap-1 text-sm">
-                <span className="text-[var(--vscode-descriptionForeground)]">
-                  Notes
-                </span>
-                <VSCodeTextArea
-                  value={notes}
-                  onChange={(event) => setNotes(event.target.value)}
-                  placeholder="Notes about the selected pairing format..."
-                />
-              </label>
-
-              <div className="flex flex-wrap gap-2">
-                <VSCodeButton onClick={saveSettings}>
-                  Save settings
-                </VSCodeButton>
-                <VSCodeButton onClick={showInfoMessage}>
-                  Show VS Code message
-                </VSCodeButton>
-                <VSCodeSecondaryButton onClick={resetSettings}>
-                  Reset
-                </VSCodeSecondaryButton>
-              </div>
-            </div>
-          </VSCodeCard>
-
-          <VSCodeCard>
-            <h2 className="text-lg font-medium">Preview</h2>
-            <div className="mt-4 grid gap-4">
-              <div className="rounded-lg border border-[var(--vscode-panel-border)] p-4">
-                <p className="text-sm text-[var(--vscode-descriptionForeground)]">
-                  Project
-                </p>
-                <h3 className="mt-1 text-lg font-medium">{projectName}</h3>
-              </div>
-
-              <div className="rounded-lg border border-[var(--vscode-panel-border)] p-4">
-                <p className="text-sm text-[var(--vscode-descriptionForeground)]">
-                  Selected Jupytext format
-                </p>
-                <code className="mt-2 block rounded bg-[var(--vscode-textCodeBlock-background)] p-3">
-                  {format}
-                </code>
-              </div>
-
-              <div className="rounded-lg border border-[var(--vscode-panel-border)] p-4">
-                <p className="text-sm text-[var(--vscode-descriptionForeground)]">
-                  Status
-                </p>
-                <p className="mt-1 text-sm">{status}</p>
-              </div>
-            </div>
-          </VSCodeCard>
-        </div>
-      </section>
+        <p className="mt-4 text-sm">
+          <strong>Status:</strong> {status}
+        </p>
+      </VSCodeCard>
     </main>
   );
 }
-
-export default App;
 ```
 
-### How the interaction works
+Two things are happening here.
 
-The React webview sends this message when the user clicks **Save settings**:
+When the button is clicked, React sends:
 
 ```ts
-postMessage({
-  type: "saveSettings",
-  payload: {
-    projectName,
-    format,
-    notes,
-  },
-});
+{
+  type: "showMessage",
+  message: "Hello from the React webview!"
+}
 ```
 
-The extension receives that message, runs extension-side logic, and sends a response back to React.
-
-The React webview receives extension messages here:
+React also listens for a response from the extension using:
 
 ```ts
 window.addEventListener("message", handleMessage);
 ```
 
-## 8. Build the React App
-
-From inside `webview-ui`, run:
-
-```bash
-npm run build
-```
-
-Vite creates:
-
-```text
-webview-ui/dist/
-  index.html
-  assets/
-    index.js
-    index.css
-```
-
-The extension will load these built files into the webview.
+We will add the extension side next.
 
 ---
 
-## 9. Add the Webview Command to `package.json`
+## 13. Add the command to VS Code
 
-Open the extension root `package.json`.
+VS Code commands must be declared in the extension's root `package.json`.
 
-Update `contributes.commands`:
+Add:
 
 ```json
 {
@@ -676,339 +617,562 @@ Update `contributes.commands`:
 }
 ```
 
-Make sure the command name matches the command registered in `extension.ts`.
+The command ID is:
+
+```text
+react-webview-vite.openPanel
+```
+
+We will use the exact same ID when registering the command in TypeScript.
 
 ---
 
-## 10. Create the Webview Panel in `extension.ts`
+## 14. Create the webview panel
 
-Replace `src/extension.ts` with:
+Now replace `src/extension.ts` with:
 
 ```ts
 import * as vscode from "vscode";
 
-type WebviewMessage =
-  | {
-      type: "saveSettings";
-      payload: {
-        projectName: string;
-        format: string;
-        notes: string;
-      };
-    }
-  | {
-      type: "showInfo";
-      payload: {
-        message: string;
-      };
-    };
+type WebviewMessage = {
+  type: "showMessage";
+  message: string;
+};
 
 export function activate(context: vscode.ExtensionContext) {
-  const disposable = vscode.commands.registerCommand(
-    "react-webview-vite.openPanel",
-    () => {
-      const panel = vscode.window.createWebviewPanel(
-        "reactWebviewVite",
-        "React Webview",
-        vscode.ViewColumn.One,
-        {
-          enableScripts: true,
-          localResourceRoots: [
-            vscode.Uri.joinPath(context.extensionUri, "webview-ui", "dist"),
-          ],
-        },
-      );
+  context.subscriptions.push(
+    vscode.commands.registerCommand(
+      "react-webview-vite.openPanel",
+      () => {
+        const webviewRoot = vscode.Uri.joinPath(
+          context.extensionUri,
+          "dist",
+          "webview",
+        );
 
-      panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri);
+        const panel = vscode.window.createWebviewPanel(
+          "reactWebviewVite",
+          "React Webview",
+          vscode.ViewColumn.One,
+          {
+            enableScripts: true,
+            localResourceRoots: [webviewRoot],
+          },
+        );
 
-      panel.webview.onDidReceiveMessage(
-        async (message: WebviewMessage) => {
-          switch (message.type) {
-            case "saveSettings": {
-              await context.globalState.update(
-                "reactWebviewVite.settings",
-                message.payload,
-              );
+        panel.webview.html = getWebviewHtml(
+          panel.webview,
+          context.extensionUri,
+        );
 
-              vscode.window.showInformationMessage(
-                `Saved settings for ${message.payload.projectName}`,
-              );
-
-              panel.webview.postMessage({
-                type: "settingsSaved",
-                payload: {
-                  savedAt: new Date().toLocaleTimeString(),
-                },
-              });
-
-              break;
+        panel.webview.onDidReceiveMessage(
+          async (message: WebviewMessage) => {
+            if (message.type !== "showMessage") {
+              return;
             }
 
-            case "showInfo": {
-              vscode.window.showInformationMessage(message.payload.message);
+            await vscode.window.showInformationMessage(
+              message.message,
+            );
 
-              panel.webview.postMessage({
-                type: "fromExtension",
-                payload: {
-                  message:
-                    "VS Code received the message and showed a notification.",
-                },
-              });
-
-              break;
-            }
-          }
-        },
-        undefined,
-        context.subscriptions,
-      );
-    },
+            await panel.webview.postMessage({
+              type: "messageShown",
+              message: "VS Code received the message.",
+            });
+          },
+        );
+      },
+    ),
   );
-
-  context.subscriptions.push(disposable);
 }
 
-function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
+function getWebviewHtml(
+  webview: vscode.Webview,
+  extensionUri: vscode.Uri,
+) {
+  const webviewRoot = vscode.Uri.joinPath(
+    extensionUri,
+    "dist",
+    "webview",
+  );
+
   const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(
-      extensionUri,
-      "webview-ui",
-      "dist",
-      "assets",
-      "index.js",
-    ),
+    vscode.Uri.joinPath(webviewRoot, "webview.js"),
   );
 
   const styleUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(
-      extensionUri,
-      "webview-ui",
-      "dist",
-      "assets",
-      "index.css",
-    ),
+    vscode.Uri.joinPath(webviewRoot, "webview.css"),
   );
 
   const nonce = getNonce();
 
-  return /* html */ `
-    <!DOCTYPE html>
-    <html lang="en">
-      <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-        <meta
-          http-equiv="Content-Security-Policy"
-          content="default-src 'none'; img-src ${webview.cspSource} https:; style-src ${webview.cspSource} 'unsafe-inline'; script-src 'nonce-${nonce}';"
-        />
-
-        <link rel="stylesheet" href="${styleUri}" />
-        <title>React Webview</title>
-      </head>
-      <body>
-        <div id="root"></div>
-        <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
-      </body>
-    </html>
-  `;
+  return /* html */ `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0"
+    />
+    <meta
+      http-equiv="Content-Security-Policy"
+      content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"
+    />
+    <link rel="stylesheet" href="${styleUri}" />
+    <title>React Webview</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script nonce="${nonce}" src="${scriptUri}"></script>
+  </body>
+</html>`;
 }
 
 function getNonce() {
-  let text = "";
-  const possible =
+  const characters =
     "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
 
-  for (let i = 0; i < 32; i++) {
-    text += possible.charAt(Math.floor(Math.random() * possible.length));
-  }
-
-  return text;
+  return Array.from(
+    { length: 32 },
+    () =>
+      characters[
+        Math.floor(Math.random() * characters.length)
+      ],
+  ).join("");
 }
 
 export function deactivate() {}
 ```
 
-Important details:
-
-- `enableScripts: true` allows the React bundle to run.
-- `localResourceRoots` allows the webview to read files from `webview-ui/dist`.
-- `webview.asWebviewUri(...)` converts extension file paths into safe webview URLs.
-- `context.extensionUri` points to the extension root folder, not the `out/` folder.
-- The compiled extension runs from `out/extension.js`, but it can still reference `webview-ui/dist/assets/index.js` relative to the extension root.
-- The CSP uses a `nonce` so only the intended script can run.
+There is a lot here, so let's break it down.
 
 ---
 
-## 11. Run Both Development Watchers
+## 15. What `createWebviewPanel` does
 
-From your terminal, make sure you are in the extension root folder:
+This creates a new editor panel containing a browser page:
 
-```bash
-cd react-webview-vite
+```ts
+vscode.window.createWebviewPanel(
+  "reactWebviewVite",
+  "React Webview",
+  vscode.ViewColumn.One,
+  {
+    enableScripts: true,
+    localResourceRoots: [webviewRoot],
+  },
+);
 ```
 
-For development, run the extension's TypeScript watcher and the Vite webview watcher at the same time.
+### `enableScripts: true`
 
-You need both because they build different parts of the project:
+React needs JavaScript, so scripts must be enabled.
+
+### `localResourceRoots`
+
+A webview should not have unrestricted access to files in your extension.
+
+We only allow it to load files from:
 
 ```text
-Extension watcher → compiles src/extension.ts into out/extension.js
-Webview watcher   → builds React/Tailwind files into webview-ui/dist/
+dist/webview
 ```
 
-Use `concurrently` because both watcher commands are long-running processes.
+That is where Vite puts the built JavaScript and CSS.
 
-From the extension root, install it:
+---
 
-```bash
-npm install -D concurrently
+## 16. Why `asWebviewUri` is necessary
+
+A webview cannot load a normal local file path directly.
+
+This will not work:
+
+```text
+/Users/me/project/dist/webview/webview.js
 ```
 
-Add these scripts to the extension root `package.json`:
+VS Code must convert the extension file into a URL that the isolated webview can access.
+
+That is what this does:
+
+```ts
+webview.asWebviewUri(
+  vscode.Uri.joinPath(webviewRoot, "webview.js"),
+);
+```
+
+We do the same thing for the CSS file.
+
+---
+
+## 17. Why the webview needs an HTML page
+
+React still needs an HTML document.
+
+The important part is:
+
+```html
+<body>
+  <div id="root"></div>
+  <script src="..."></script>
+</body>
+```
+
+The extension provides this HTML with:
+
+```ts
+panel.webview.html = getWebviewHtml(...);
+```
+
+The Vite bundle then starts React and mounts it into:
+
+```html
+<div id="root"></div>
+```
+
+---
+
+## 18. Why the Content Security Policy uses a nonce
+
+VS Code webviews support Content Security Policy rules.
+
+This tutorial uses:
+
+```html
+default-src 'none';
+style-src WEBVIEW_SOURCE;
+script-src 'nonce-RANDOM_VALUE';
+```
+
+That means scripts are blocked unless their `nonce` matches the value generated by the extension.
+
+The script tag receives the same value:
+
+```html
+<script nonce="RANDOM_VALUE" src="..."></script>
+```
+
+This is safer than allowing arbitrary scripts to run inside the webview.
+
+---
+
+## 19. How React sends a message to the extension
+
+When the button is clicked, React calls:
+
+```ts
+postMessage({
+  type: "showMessage",
+  message: "Hello from the React webview!",
+});
+```
+
+That eventually calls:
+
+```ts
+vscode.postMessage(message);
+```
+
+The extension listens here:
+
+```ts
+panel.webview.onDidReceiveMessage(
+  async (message: WebviewMessage) => {
+    // ...
+  },
+);
+```
+
+When the extension receives the message, it can use the real VS Code API:
+
+```ts
+await vscode.window.showInformationMessage(
+  message.message,
+);
+```
+
+This is the important boundary:
+
+```text
+React browser code
+    ↓ message
+VS Code extension code
+    ↓
+VS Code API
+```
+
+---
+
+## 20. How the extension sends a message back to React
+
+After showing the notification, the extension sends:
+
+```ts
+await panel.webview.postMessage({
+  type: "messageShown",
+  message: "VS Code received the message.",
+});
+```
+
+Inside React, this listener receives it:
+
+```ts
+window.addEventListener("message", handleMessage);
+```
+
+Then React updates its state:
+
+```ts
+setStatus(event.data.message);
+```
+
+So the full round trip is:
+
+```text
+React button click
+      ↓
+vscode.postMessage(...)
+      ↓
+extension receives message
+      ↓
+vscode.window.showInformationMessage(...)
+      ↓
+panel.webview.postMessage(...)
+      ↓
+React message event
+      ↓
+setStatus(...)
+```
+
+---
+
+## 21. Add a separate TypeScript config for the webview
+
+The extension runs in Node.js.
+
+The React webview runs in a browser.
+
+Because they use different globals, it is useful to type-check them separately.
+
+Create:
+
+```text
+tsconfig.webview.json
+```
+
+Add:
+
+```json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "ES2022",
+    "target": "ES2022",
+    "lib": ["ES2022", "DOM"],
+    "jsx": "react-jsx",
+    "moduleResolution": "bundler",
+    "noEmit": true
+  },
+  "include": [
+    "src/webview/**/*.ts",
+    "src/webview/**/*.tsx",
+    "src/webview/**/*.d.ts"
+  ],
+  "exclude": [
+    "src/extension.ts",
+    "node_modules",
+    "dist"
+  ]
+}
+```
+
+Your root `tsconfig.json` should exclude the webview source so the extension config does not treat browser code like Node code.
+
+Then add:
 
 ```json
 {
   "scripts": {
-    "watch": "tsc -watch -p ./",
-    "watch:webview": "npm --prefix webview-ui run build -- --watch",
-    "dev": "concurrently \"npm run watch\" \"npm run watch:webview\""
+    "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.webview.json"
   }
 }
 ```
 
-Now start both watchers from the extension root:
+Run:
+
+```bash
+npm run typecheck
+```
+
+---
+
+## 22. Build the extension
+
+Run:
+
+```bash
+npm run build
+```
+
+You should now have:
+
+```text
+dist/
+├── extension.js
+└── webview/
+    ├── webview.js
+    └── webview.css
+```
+
+Those are the files VS Code will actually execute and load.
+
+---
+
+## 23. Run the extension
+
+Open the project in VS Code and press:
+
+```text
+F5
+```
+
+VS Code opens a second window called the **Extension Development Host**.
+
+This is a separate VS Code window where your extension is installed temporarily for development.
+
+In that new window:
+
+1. Open the Command Palette.
+2. On macOS, press `Cmd + Shift + P`.
+3. On Windows/Linux, press `Ctrl + Shift + P`.
+4. Run:
+
+```text
+Open React Webview
+```
+
+A React panel should open.
+
+Click:
+
+```text
+Send message to VS Code
+```
+
+You should see a native VS Code notification:
+
+```text
+Hello from the React webview!
+```
+
+The React panel should then update its status to:
+
+```text
+VS Code received the message.
+```
+
+If you see both, communication works in both directions.
+
+---
+
+## 24. Development workflow
+
+While developing, start both Vite watchers:
 
 ```bash
 npm run dev
 ```
 
-This keeps both outputs updated while you work:
+This keeps these files updated:
 
 ```text
-out/extension.js
-webview-ui/dist/assets/index.js
-webview-ui/dist/assets/index.css
+src/extension.ts
+    ↓
+dist/extension.js
+
+src/webview/*
+    ↓
+dist/webview/webview.js
+dist/webview/webview.css
 ```
+
+### When React changes
+
+Close the webview panel and run **Open React Webview** again.
+
+### When extension code changes
+
+Reload the Extension Development Host:
+
+- macOS: `Cmd + R`
+- Windows/Linux: `Ctrl + R`
+
+Then reopen the webview.
 
 ---
 
-## 12. Start and Reload the Extension
+## 25. If the panel is blank
 
-To start the extension:
-
-1. Open the extension project in VS Code.
-2. Press `F5`.
-3. A new **Extension Development Host** window opens.
-4. Open the Command Palette.
-5. Run:
+First check that these files exist:
 
 ```text
-Open React Webview
+dist/extension.js
+dist/webview/webview.js
+dist/webview/webview.css
 ```
 
-The React webview should appear.
-
-### Reloading after changes
-
-There are two common reload flows.
-
-#### If you changed React code
-
-1. Keep `npm run dev` running from the extension root.
-2. Close the webview panel.
-3. Run `Open React Webview` again.
-
-Usually you do not need to restart the full Extension Development Host for React-only changes.
-
-#### If you changed the extension code
-
-If you changed `src/extension.ts` or `package.json`:
-
-1. Go to the Extension Development Host window.
-2. Press:
-
-```text
-Ctrl + R
-```
-
-On macOS, use:
-
-```text
-Cmd + R
-```
-
-This reloads the Extension Development Host.
-
-Then run:
-
-```text
-Open React Webview
-```
-
-again from the Command Palette.
-
----
-
-## 13. Production Build
-
-Before packaging or publishing the extension, build both parts:
-
-```bash
-npm run compile
-npm --prefix webview-ui run build
-```
-
-You should commit or package the built webview assets depending on your publishing workflow.
-
-## 14. Quick Checks
-
-Before running the extension, confirm these files exist:
-
-```text
-out/extension.js
-webview-ui/dist/assets/index.js
-webview-ui/dist/assets/index.css
-```
-
-Also confirm the command ID matches in both places:
-
-```text
-package.json → contributes.commands[].command
-src/extension.ts → vscode.commands.registerCommand(...)
-```
-
-If the webview is blank, open VS Code Developer Tools with:
+Then open:
 
 ```text
 Developer: Toggle Developer Tools
 ```
 
+Look for errors related to:
+
+- missing JavaScript or CSS
+- Content Security Policy
+- incorrect resource paths
+- `acquireVsCodeApi`
+
+Also confirm:
+
+```ts
+enableScripts: true
+```
+
+and verify that `localResourceRoots` points to `dist/webview`.
+
 ---
 
-## 15. Final Folder Structure
+## 26. Final project structure
+
+Your project should now look roughly like this:
 
 ```text
 react-webview-vite/
-  package.json
-  tsconfig.json
-  src/
-    extension.ts
-  out/
-    extension.js
-    extension.js.map
-  webview-ui/
-    package.json
-    vite.config.ts
-    index.html
-    src/
-      App.tsx
-      main.tsx
-      index.css
-    dist/
-      assets/
-        index.js
-        index.css
+├── package.json
+├── package-lock.json
+├── tsconfig.json
+├── tsconfig.webview.json
+├── vite.extension.config.ts
+├── vite.webview.config.ts
+├── src/
+│   ├── extension.ts
+│   └── webview/
+│       ├── App.tsx
+│       ├── index.tsx
+│       ├── index.css
+│       ├── vscode.d.ts
+│       ├── api/
+│       │   └── vscode-api.ts
+│       └── components/
+│           └── vscode-ui.tsx
+└── dist/
+    ├── extension.js
+    └── webview/
+        ├── webview.js
+        └── webview.css
 ```
 
 ---
@@ -1017,21 +1181,25 @@ react-webview-vite/
 
 You now have a VS Code extension that:
 
-- Registers a command in the Command Palette
-- Opens a custom webview panel
-- Loads a React app built by Vite
-- Uses Tailwind CSS for layout and styling
-- Uses small reusable React components styled with VS Code theme variables
-- Supports a practical reload workflow during development
+- registers a command in the Command Palette
+- opens a custom webview panel
+- renders React inside VS Code
+- builds both runtimes with Vite
+- uses Tailwind for layout
+- follows the active VS Code theme
+- sends messages from React to the extension
+- sends responses from the extension back to React
 
-The key development loop is:
-
-```bash
-npm run dev
-```
-
-Then:
+The most important thing to remember is:
 
 ```text
-F5 → Open React Webview → edit React → close/reopen panel → edit extension → Ctrl/Cmd + R
+React owns the UI.
+VS Code owns the editor APIs.
+Messages connect them.
 ```
+
+Once that makes sense, you can build much richer webviews using the same pattern.
+
+Source code:
+
+**https://github.com/moyarich/react-webview-vite-template-1**

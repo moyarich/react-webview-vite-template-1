@@ -1,7 +1,7 @@
 {
   "name": "react-webview-vite",
-  "displayName": "react-webview-vite",
-  "description": "webview",
+  "displayName": "React Webview Vite Template",
+  "description": "A minimal VS Code webview example using React, Vite, Tailwind CSS, and VS Code theme variables.",
   "version": "0.0.1",
   "engines": {
     "vscode": "^1.118.0"
@@ -10,13 +10,9 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./out/extension.js",
+  "main": "./dist/extension.js",
   "contributes": {
     "commands": [
-      {
-        "command": "react-webview-vite.helloWorld",
-        "title": "Hello World"
-      },
       {
         "command": "react-webview-vite.openPanel",
         "title": "Open React Webview"
@@ -24,24 +20,32 @@
     ]
   },
   "scripts": {
-    "vscode:prepublish": "npm run compile",
-    "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
-    "watch:webview": "npm --prefix webview-ui run build -- --watch",
-    "dev": "concurrently \"npm run watch\" \"npm run watch:webview\"",
-    "pretest": "npm run compile && npm run lint",
-    "lint": "eslint src",
-    "test": "vscode-test"
+    "vscode:prepublish": "npm run build",
+    "build": "vite build --config vite.extension.config.ts && vite build --config vite.webview.config.ts",
+    "build:extension": "vite build --config vite.extension.config.ts",
+    "build:webview": "vite build --config vite.webview.config.ts",
+    "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
+    "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
+    "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts",
+    "dev": "npm run watch",
+    "dev:extension": "node ./scripts/run-extension-dev.mjs",
+    "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.webview.json",
+    "lint": "eslint src"
   },
   "devDependencies": {
-    "@types/mocha": "^10.0.10",
+    "@tailwindcss/vite": "^4.3.0",
     "@types/node": "22.x",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
     "@types/vscode": "^1.118.0",
-    "@vscode/test-cli": "^0.0.12",
-    "@vscode/test-electron": "^2.5.2",
+    "@vitejs/plugin-react": "^6.0.1",
     "concurrently": "^9.2.1",
     "eslint": "^9.39.3",
+    "react": "^19.2.5",
+    "react-dom": "^19.2.5",
+    "tailwindcss": "^4.3.0",
     "typescript": "^5.9.3",
-    "typescript-eslint": "^8.56.1"
+    "typescript-eslint": "^8.56.1",
+    "vite": "^8.0.10"
   }
 }

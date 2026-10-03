@@ -1,0 +1,96 @@
+---
+title: Vite Builds
+label: Vite Builds
+---
+
+# Vite Builds
+
+The project uses Vite for both runtimes, but each runtime needs a different configuration.
+
+## Extension configuration
+
+`vite.extension.config.ts` builds the VS Code extension host.
+
+Important ideas:
+
+- entry: `src/extension.ts`
+- target: Node
+- output: CommonJS
+- external module: `vscode`
+- output file: `dist/extension.js`
+
+The `vscode` module stays external because VS Code provides it at runtime.
+
+A simplified configuration looks like:
+
+```ts
+build: {
+  ssr: "src/extension.ts",
+  target: "node22",
+  outDir: "dist",
+  rollupOptions: {
+    external: ["vscode"],
+    output: {
+      format: "cjs",
+      entryFileNames: "extension.js",
+    },
+  },
+}
+```
+
+## Webview configuration
+
+`vite.webview.config.ts` builds the browser UI.
+
+Important ideas:
+
+- entry: `src/webview/index.tsx`
+- plugins: React and Tailwind
+- output: `dist/webview`
+- predictable JS name: `webview.js`
+- predictable CSS name: `webview.css`
+- IIFE output
+- inline dynamic imports
+
+A predictable output path keeps the extension HTML simple:
+
+```ts
+const scriptUri = webview.asWebviewUri(
+  vscode.Uri.joinPath(webviewRoot, "webview.js"),
+);
+```
+
+## Why two configs?
+
+The runtime requirements are different:
+
+| Extension host | Webview |
+| --- | --- |
+| Node.js | Browser |
+| CommonJS output | Browser bundle |
+| `vscode` external | React bundled |
+| No DOM | DOM available |
+
+One build tool is useful. One build configuration would hide important runtime differences.
+
+## TypeScript boundaries
+
+The project also uses two TypeScript configurations.
+
+The root `tsconfig.json` handles extension-host code and excludes `src/webview/**`.
+
+`tsconfig.webview.json` includes browser libraries and JSX:
+
+```json
+{
+  "lib": ["ES2022", "DOM"],
+  "jsx": "react-jsx",
+  "moduleResolution": "bundler"
+}
+```
+
+Run both checks with:
+
+```bash
+npm run typecheck
+```
