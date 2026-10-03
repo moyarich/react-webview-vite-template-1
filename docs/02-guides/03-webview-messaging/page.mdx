@@ -87,3 +87,38 @@ useEffect(() => {
 For a larger extension, move message types into a shared module so both runtimes import the same contract.
 
 The small tutorial keeps the types local so the basic flow stays visible.
+
+
+## Browser preview shim
+
+`acquireVsCodeApi()` is injected by VS Code and does not exist in an ordinary browser.
+
+The API wrapper therefore chooses between the real implementation and a browser-only preview shim:
+
+```ts
+vscodeApi =
+  typeof acquireVsCodeApi === "function"
+    ? acquireVsCodeApi()
+    : createPreviewVsCodeApi();
+```
+
+The preview implementation supports:
+
+- `postMessage(...)`
+- `getState()`
+- `setState(...)`
+
+For `showMessage`, the shim dispatches a synthetic browser `message` event:
+
+```ts
+window.dispatchEvent(
+  new MessageEvent("message", {
+    data: {
+      type: "messageShown",
+      message: "Preview shim received the message.",
+    },
+  }),
+);
+```
+
+This keeps React behavior testable in a browser while preserving the real extension-host message path inside VS Code.
