@@ -1,5 +1,5 @@
 {
-  "name": "react-webview-vite-docs-simplify-webview-how-to",
+  "name": "react-webview-vite-single-webview",
   "displayName": "React Webview Vite Template",
   "description": "A minimal VS Code webview example using React, Vite, Tailwind CSS, and VS Code theme variables.",
   "version": "0.0.1",

@@ -1,5 +1,5 @@
 {
-  "name": "react-webview-vite-template-monorepo",
+  "name": "react-webview-vite-templates",
   "private": true,
   "version": "0.0.0",
   "workspaces": [
@@ -10,7 +10,9 @@
     "typecheck": "npm run typecheck --workspaces --if-present",
     "lint": "npm run lint --workspaces --if-present",
     "test": "npm test --workspaces --if-present",
-    "dev:main": "npm run dev --workspace react-webview-vite-main",
-    "dev:multi-webview": "npm run dev --workspace react-webview-vite-feat-multi-webview-template"
+    "dev:single": "npm run dev --workspace react-webview-vite-single-webview",
+    "dev:separate-ui": "npm run dev --workspace react-webview-vite-separate-webview-ui",
+    "dev:multi": "npm run dev --workspace react-webview-vite-multi-webview",
+    "dev:scaffold": "npm run dev --workspace react-webview-vite-scaffold"
   }
 }

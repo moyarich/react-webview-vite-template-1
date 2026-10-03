@@ -1,5 +1,5 @@
 {
-  "name": "react-webview-vite-docs-separate-webview-ui-tutorial",
+  "name": "react-webview-vite-separate-webview-ui",
   "displayName": "React Webview Vite",
   "description": "A minimal VS Code extension with a React, Vite, and Tailwind CSS webview in a separate webview-ui package.",
   "version": "0.0.1",

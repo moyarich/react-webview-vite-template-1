@@ -1,35 +1,27 @@
 # React Webview Vite Templates
 
-This repository is an npm workspace containing the implementations represented by the repository branches.
+A small npm workspace containing distinct VS Code + React webview architectures.
 
-Each branch is preserved as a package under `packages/*`.
-
-## Workspace layout
+## Packages
 
 ```text
 packages/
-├── main/
-├── docs-separate-webview-ui-tutorial/
-├── docs-simplify-webview-how-to/
-├── feat-multi-webview-template/
-└── scaffold-separate-webview-ui-directory/
+├── single-webview/
+├── separate-webview-ui/
+├── multi-webview/
+└── scaffold/
 ```
 
-## Branch mapping
+| Package | Purpose |
+| --- | --- |
+| `single-webview` | One React webview in the same npm package as the VS Code extension |
+| `separate-webview-ui` | Extension host with a separately managed `webview-ui/` frontend |
+| `multi-webview` | Multiple React webviews with shared UI, theme, messaging, and multi-entry Vite builds |
+| `scaffold` | Generator-style baseline with a separate `webview-ui/` directory |
 
-| Source branch | Workspace package | Package name |
-| --- | --- | --- |
-| `main` | `packages/main` | `react-webview-vite-main` |
-| `docs/separate-webview-ui-tutorial` | `packages/docs-separate-webview-ui-tutorial` | `react-webview-vite-docs-separate-webview-ui-tutorial` |
-| `docs/simplify-webview-how-to` | `packages/docs-simplify-webview-how-to` | `react-webview-vite-docs-simplify-webview-how-to` |
-| `feat/multi-webview-template` | `packages/feat-multi-webview-template` | `react-webview-vite-feat-multi-webview-template` |
-| `scaffold/separate-webview-ui-directory` | `packages/scaffold-separate-webview-ui-directory` | `react-webview-vite-scaffold-separate-webview-ui-directory` |
-
-The imported packages retain the source branch contents. Their root `package.json` names are made unique so npm can manage all of them as workspaces.
+The `single-webview` package represents the same project state as the previous root implementation, so the root itself is not duplicated as a workspace package.
 
 ## Install
-
-From the repository root:
 
 ```bash
 npm install
@@ -41,41 +33,39 @@ npm install
 npm run build
 ```
 
-The root command runs each workspace's own `build` script when present.
-
-## Typecheck all packages
+## Typecheck
 
 ```bash
 npm run typecheck
 ```
 
-## Lint all packages
+## Lint
 
 ```bash
 npm run lint
 ```
 
-## Run one package
-
-Use npm's workspace selector:
+## Test
 
 ```bash
-npm run dev --workspace react-webview-vite-main
+npm test
 ```
 
-or:
+Commands run only in workspaces that define the corresponding script.
+
+## Develop one template
 
 ```bash
-npm run dev --workspace react-webview-vite-feat-multi-webview-template
+npm run dev:single
+npm run dev:separate-ui
+npm run dev:multi
+npm run dev:scaffold
 ```
 
-Convenience aliases are also available:
+Equivalent npm workspace selection is also available:
 
 ```bash
-npm run dev:main
-npm run dev:multi-webview
+npm run dev --workspace react-webview-vite-multi-webview
 ```
 
-## Package ownership
-
-Each package remains self-contained. Package-specific README files, docs, Vite configuration, VS Code extension files, scripts, and nested frontend folders stay with that package.
+Each package owns its own source, documentation, VS Code configuration, Vite configuration, and any nested frontend application it needs.
