@@ -5,65 +5,19 @@ label: VS Code-Themed Components
 
 # VS Code-Themed Components
 
-Tailwind handles layout and spacing. VS Code theme variables provide the colors.
+All webviews share the same component and theme layer under:
 
-The webview stylesheet starts with:
-
-```css
-@import "tailwindcss";
+```text
+src/webviews/shared/
+├── components/
+└── styles/
 ```
-
-## Use VS Code variables instead of fixed colors
-
-VS Code injects CSS variables such as:
-
-```css
-var(--vscode-editor-background)
-var(--vscode-foreground)
-var(--vscode-descriptionForeground)
-var(--vscode-panel-border)
-var(--vscode-button-background)
-var(--vscode-button-foreground)
-var(--vscode-button-hoverBackground)
-```
-
-Instead of:
-
-```tsx
-<button className="bg-blue-600 text-white">
-```
-
-use:
-
-```tsx
-<button
-  className="
-    bg-[var(--vscode-button-background)]
-    text-[var(--vscode-button-foreground)]
-    hover:bg-[var(--vscode-button-hoverBackground)]
-  "
->
-```
-
-The component will follow the user's active VS Code theme.
-
-## Keep the component layer small
-
-The tutorial contains only:
-
-- `VSCodeButton`
-- `VSCodeCard`
-
-That is enough to demonstrate the pattern without turning the example into a design-system project.
-
-As an extension grows, add wrappers only where they improve reuse, consistency, or accessibility.
-
 
 ## Private theme tokens
 
-React components should not read VS Code's host-provided `--vscode-*` variables directly.
+React components do not read `--vscode-*` variables directly.
 
-Instead, `index.css` maps host theme values into app-owned private variables with browser-safe defaults:
+The shared stylesheet maps optional VS Code host values into app-owned private tokens with browser defaults:
 
 ```css
 :root {
@@ -72,25 +26,26 @@ Instead, `index.css` maps host theme values into app-owned private variables wit
   --webview-panel-border: var(--vscode-panel-border, #d0d7de);
   --webview-button-background: var(--vscode-button-background, #0969da);
   --webview-button-foreground: var(--vscode-button-foreground, #ffffff);
-  --webview-button-hover-background: var(
-    --vscode-button-hoverBackground,
-    #0860ca
-  );
 }
 ```
 
-Components consume only `--webview-*` values:
+Components consume only the private layer:
 
 ```tsx
 className="bg-[var(--webview-button-background)] text-[var(--webview-button-foreground)]"
 ```
 
-This gives the webview a stable default theme in a normal browser while allowing VS Code to override those private tokens indirectly through its injected `--vscode-*` variables.
-
-The dependency remains one-way:
+The dependency direction stays one-way:
 
 ```text
-components
-→ private webview tokens
-→ browser defaults / optional VS Code host values
+shared React components
+→ --webview-* tokens
+→ browser defaults
+→ optional VS Code theme values
 ```
+
+## Why share the component layer?
+
+Dashboard and Settings should not duplicate buttons, cards, theme mappings, or accessibility behavior.
+
+A new webview can reuse the same shared components immediately.
