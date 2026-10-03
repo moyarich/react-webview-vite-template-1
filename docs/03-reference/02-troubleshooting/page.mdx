@@ -1,0 +1,80 @@
+---
+title: Troubleshooting
+label: Troubleshooting
+---
+
+# Troubleshooting
+
+## The panel is blank
+
+Confirm the build generated:
+
+```text
+dist/extension.js
+dist/webview/webview.js
+dist/webview/webview.css
+```
+
+Then open:
+
+```text
+Developer: Toggle Developer Tools
+```
+
+and inspect the console.
+
+## JavaScript is blocked
+
+Confirm the panel enables scripts:
+
+```ts
+enableScripts: true
+```
+
+Also verify that the script nonce matches the nonce declared by the Content Security Policy.
+
+## CSS or JavaScript cannot load
+
+Check all three:
+
+```text
+localResourceRoots
+webview.asWebviewUri(...)
+actual Vite output paths
+```
+
+The example allows local resources only from:
+
+```text
+dist/webview
+```
+
+## React cannot import vscode
+
+That is expected.
+
+The `vscode` module exists in the extension host, not the webview browser.
+
+Send a message from React to `src/extension.ts` and call the VS Code API there.
+
+## F5 opens VS Code but the webview is missing assets
+
+The checked-in launch configuration uses the root build task before starting the Extension Development Host.
+
+Run the build manually to inspect errors:
+
+```bash
+npm run build
+```
+
+## The `code` command is not available
+
+The terminal launcher uses `code` by default.
+
+Set `CODE_COMMAND` to another executable:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev:extension
+```
+
+You can always use VS Code's built-in `F5` workflow instead.
