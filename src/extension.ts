@@ -8,15 +8,19 @@ type WebviewMessage = {
 export function activate(context: vscode.ExtensionContext) {
   context.subscriptions.push(
     vscode.commands.registerCommand("react-webview-vite.openPanel", () => {
+      const webviewRoot = vscode.Uri.joinPath(
+        context.extensionUri,
+        "dist",
+        "webview",
+      );
+
       const panel = vscode.window.createWebviewPanel(
         "reactWebviewVite",
         "React Webview",
         vscode.ViewColumn.One,
         {
           enableScripts: true,
-          localResourceRoots: [
-            vscode.Uri.joinPath(context.extensionUri, "webview-ui", "dist"),
-          ],
+          localResourceRoots: [webviewRoot],
         },
       );
 
@@ -41,16 +45,15 @@ export function activate(context: vscode.ExtensionContext) {
 function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
   const assetRoot = vscode.Uri.joinPath(
     extensionUri,
-    "webview-ui",
     "dist",
-    "assets",
+    "webview",
   );
 
   const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(assetRoot, "index.js"),
+    vscode.Uri.joinPath(assetRoot, "webview.js"),
   );
   const styleUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(assetRoot, "index.css"),
+    vscode.Uri.joinPath(assetRoot, "webview.css"),
   );
   const nonce = getNonce();
 
@@ -68,7 +71,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
   </head>
   <body>
     <div id="root"></div>
-    <script type="module" nonce="${nonce}" src="${scriptUri}"></script>
+    <script nonce="${nonce}" src="${scriptUri}"></script>
   </body>
 </html>`;
 }
