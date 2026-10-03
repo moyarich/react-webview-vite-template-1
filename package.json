@@ -36,6 +36,12 @@
           "command": "react-webview-vite.openPanel",
           "group": "navigation"
         }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
       ]
     }
   },
