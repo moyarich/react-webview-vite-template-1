@@ -6,13 +6,17 @@
     "packages/*"
   ],
   "scripts": {
-    "build": "node ./scripts/run-workspaces.mjs build",
-    "typecheck": "node ./scripts/run-workspaces.mjs typecheck",
-    "lint": "node ./scripts/run-workspaces.mjs lint",
-    "test": "node ./scripts/run-workspaces.mjs test",
+    "build": "npm run build --workspaces --if-present",
+    "typecheck": "npm run typecheck --workspaces --if-present",
+    "lint": "npm run lint --workspaces --if-present",
+    "test": "npm test --workspaces --if-present",
+    "workspaces:run": "run-workspaces",
     "dev:single": "npm run dev --workspace react-webview-vite-single-webview",
     "dev:separate-ui": "npm run dev --workspace react-webview-vite-separate-webview-ui",
     "dev:multi": "npm run dev --workspace react-webview-vite-multi-webview",
     "dev:scaffold": "npm run dev --workspace react-webview-vite-scaffold"
+  },
+  "bin": {
+    "run-workspaces": "./scripts/run-workspaces.mjs"
   }
 }
