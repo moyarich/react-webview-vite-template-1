@@ -63,10 +63,30 @@ webview-ui/dist/assets/index.css
 npm run watch
 ```
 
-or:
+This starts only the two build watchers.
+
+## Start the complete development environment
 
 ```bash
 npm run dev
+```
+
+Before `dev` runs, the `predev` lifecycle script performs a complete build.
+
+Then `dev` runs three processes with `concurrently`:
+
+```text
+watch:extension
+watch:webview
+dev:extension
+```
+
+`dev:extension` launches VS Code with the current repository passed as `--extensionDevelopmentPath` and keeps the CLI attached with `--wait`.
+
+Override the VS Code CLI command when needed:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev
 ```
 
 ## Watch only the extension
@@ -96,3 +116,22 @@ npm run lint
 ```
 
 Runs linting for both packages.
+
+
+## Preview
+
+```bash
+npm run dev
+```
+
+The development command starts a Vite preview for the React webview automatically.
+
+The browser uses the preview shim for `acquireVsCodeApi()`.
+
+The VS Code-hosted webview continues to use the real API.
+
+Run only the preview with:
+
+```bash
+npm run dev:preview
+```

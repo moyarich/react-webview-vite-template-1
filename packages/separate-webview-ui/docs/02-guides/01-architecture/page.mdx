@@ -72,3 +72,66 @@ webview-ui/dist/
 ```
 
 The extension references the built browser assets through `webview.asWebviewUri(...)`.
+
+
+## Command surface
+
+The extension contributes one command:
+
+```text
+react-webview-vite.openPanel
+```
+
+It is available from the Command Palette, from the editor context menu, and from the Explorer file context menu:
+
+```text
+React Webview
+└── Open React Webview
+```
+
+The submenu is declared with `contributes.submenus` and inserted into `editor/context` through `contributes.menus`.
+
+The submenu itself then receives the command through a menu whose ID matches the submenu ID:
+
+```json
+{
+  "submenus": [
+    {
+      "id": "react-webview-vite.webviewMenu",
+      "label": "React Webview"
+    }
+  ],
+  "menus": {
+    "editor/context": [
+      {
+        "submenu": "react-webview-vite.webviewMenu"
+      }
+    ],
+    "explorer/context": [
+      {
+        "submenu": "react-webview-vite.webviewMenu"
+      }
+    ],
+    "react-webview-vite.webviewMenu": [
+      {
+        "command": "react-webview-vite.openPanel"
+      }
+    ]
+  }
+}
+```
+
+
+### Editor vs Explorer context menus
+
+VS Code uses different menu contribution points depending on where the user right-clicks:
+
+```text
+Right-click inside an open editor
+→ editor/context
+
+Right-click a file in the Explorer sidebar
+→ explorer/context
+```
+
+If a command should appear in both places, contribute the submenu to both menu IDs.

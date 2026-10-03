@@ -35,12 +35,14 @@ export default function App() {
 
         <VSCodeButton
           className="mt-4"
-          onClick={() =>
+          onClick={() => {
+            setStatus("Sending message to VS Code...");
+
             postMessage({
               type: "showMessage",
               message: "Hello from the React webview!",
-            })
-          }
+            });
+          }}
         >
           Send message to VS Code
         </VSCodeButton>

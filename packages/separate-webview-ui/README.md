@@ -400,11 +400,11 @@ Examples include:
 ```css
 var(--vscode-editor-background)
 var(--vscode-foreground)
-var(--vscode-descriptionForeground)
-var(--vscode-panel-border)
-var(--vscode-button-background)
-var(--vscode-button-foreground)
-var(--vscode-button-hoverBackground)
+var(--webview-description-foreground)
+var(--webview-panel-border)
+var(--webview-button-background)
+var(--webview-button-foreground)
+var(--webview-button-hover-background)
 ```
 
 We can use Tailwind for layout and spacing while using VS Code variables for colors.
@@ -430,7 +430,7 @@ export function VSCodeButton({
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded bg-[var(--vscode-button-background)] px-3 py-2 text-[var(--vscode-button-foreground)] hover:bg-[var(--vscode-button-hoverBackground)] ${className}`}
+      className={`rounded bg-[var(--webview-button-background)] px-3 py-2 text-[var(--webview-button-foreground)] hover:bg-[var(--webview-button-hover-background)] ${className}`}
       {...props}
     />
   );
@@ -438,7 +438,7 @@ export function VSCodeButton({
 
 export function VSCodeCard({ children }: { children: ReactNode }) {
   return (
-    <section className="max-w-xl rounded border border-[var(--vscode-panel-border)] p-5">
+    <section className="max-w-xl rounded border border-[var(--webview-panel-border)] p-5">
       {children}
     </section>
   );
@@ -450,7 +450,7 @@ These are ordinary React components.
 The VS Code integration comes from CSS variables such as:
 
 ```tsx
-bg-[var(--vscode-button-background)]
+bg-[var(--webview-button-background)]
 ```
 
 That allows the UI to follow light, dark, and custom editor themes.
@@ -508,6 +508,31 @@ export function postMessage(message: WebviewMessage) {
 
 This small wrapper keeps the VS Code webview API in one place.
 
+### Preview shim
+
+`acquireVsCodeApi()` only exists inside a real VS Code webview.
+
+To let the React app run in a normal browser during Vite development, the wrapper falls back to a small preview implementation:
+
+```ts
+const vscode =
+  typeof acquireVsCodeApi === "function"
+    ? acquireVsCodeApi()
+    : createPreviewVsCodeApi();
+```
+
+The preview shim implements:
+
+```text
+postMessage(...)
+getState()
+setState(...)
+```
+
+For the tutorial's `showMessage` action, it also dispatches a simulated `messageShown` browser event so the same React interaction can be tested without launching VS Code.
+
+The preview response is simulated browser behavior. In the real extension, messages still travel through the VS Code extension host.
+
 ---
 
 ## 12. Build the React UI
@@ -552,7 +577,7 @@ export default function App() {
       <VSCodeCard>
         <h1 className="text-xl font-semibold">Hello from React</h1>
 
-        <p className="mt-2 text-[var(--vscode-descriptionForeground)]">
+        <p className="mt-2 text-[var(--webview-description-foreground)]">
           This UI is rendered by React inside a VS Code webview.
         </p>
 
@@ -583,7 +608,7 @@ React also listens for a message coming back from the extension and stores it in
 
 ---
 
-## 13. Register the VS Code command
+## 13. Register the VS Code command and menu
 
 Open the root:
 
@@ -591,7 +616,7 @@ Open the root:
 package.json
 ```
 
-Add:
+First declare the command:
 
 ```json
 {
@@ -612,7 +637,62 @@ The command ID is:
 react-webview-vite.openPanel
 ```
 
-We will use that exact ID in `src/extension.ts`.
+We will use that exact ID again in `src/extension.ts`.
+
+Declaring a command makes it available to VS Code, including the Command Palette. We can also surface it in the editor UI.
+
+Add a submenu:
+
+```json
+{
+  "contributes": {
+    "submenus": [
+      {
+        "id": "react-webview-vite.webviewMenu",
+        "label": "React Webview"
+      }
+    ]
+  }
+}
+```
+
+Then add the submenu to the editor context menu and place our command inside it:
+
+```json
+{
+  "contributes": {
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ],
+      "react-webview-vite.webviewMenu": [
+        {
+          "command": "react-webview-vite.openPanel",
+          "group": "navigation"
+        }
+      ]
+    }
+  }
+}
+```
+
+Now a user can right-click either inside an editor or on a file in the Explorer and choose:
+
+```text
+React Webview
+└── Open React Webview
+```
+
+The same command is still available from the Command Palette.
 
 ---
 
@@ -1024,23 +1104,43 @@ That confirms both message directions work.
 
 ## 24. Development workflow
 
-Start both build watchers from the repository root:
+For day-to-day development, run one command from the repository root:
 
 ```bash
 npm run dev
 ```
 
-That runs:
+The first time it starts, `predev` runs a complete build. Then `dev` starts three long-running processes together:
 
 ```text
+extension watcher
 src/extension.ts
     ↓ Vite watch
 dist/extension.js
 
+webview watcher
 webview-ui/src/*
     ↓ Vite watch
 webview-ui/dist/assets/*
+
+VS Code
+    ↓
+Extension Development Host
 ```
+
+The VS Code window is launched with this repository as the extension under development, so you do not need to press `F5` when using `npm run dev`.
+
+Once the window opens, run **Open React Webview** from the Command Palette.
+
+The terminal stays attached while that VS Code window is open. Closing the development window stops the combined development command.
+
+If your VS Code CLI is not named `code`, set `CODE_COMMAND`:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev
+```
+
+You can still use `F5` instead if you prefer VS Code's built-in debugger.
 
 ### When React changes
 

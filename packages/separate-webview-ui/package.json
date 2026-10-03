@@ -17,7 +17,33 @@
         "command": "react-webview-vite.openPanel",
         "title": "Open React Webview"
       }
-    ]
+    ],
+    "submenus": [
+      {
+        "id": "react-webview-vite.webviewMenu",
+        "label": "React Webview"
+      }
+    ],
+    "menus": {
+      "editor/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ],
+      "react-webview-vite.webviewMenu": [
+        {
+          "command": "react-webview-vite.openPanel",
+          "group": "navigation"
+        }
+      ],
+      "explorer/context": [
+        {
+          "submenu": "react-webview-vite.webviewMenu",
+          "group": "navigation"
+        }
+      ]
+    }
   },
   "scripts": {
     "postinstall": "npm ci --prefix webview-ui",
@@ -28,7 +54,9 @@
     "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
     "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
     "watch:webview": "npm --prefix webview-ui run build:watch",
-    "dev": "npm run watch",
+    "dev": "concurrently -k -n extension,webview,preview,vscode \"npm run watch:extension\" \"npm run watch:webview\" \"npm run dev:preview\" \"npm run dev:extension\"",
+    "dev:preview": "npm --prefix webview-ui run dev",
+    "dev:extension": "node ./scripts/run-extension-dev.mjs",
     "typecheck": "tsc --noEmit && npm --prefix webview-ui run typecheck",
     "lint": "eslint src && npm --prefix webview-ui run lint"
   },

@@ -81,7 +81,7 @@ Run:
 npm run dev
 ```
 
-This starts both watchers:
+This performs an initial build, starts both Vite watchers, and launches a VS Code Extension Development Host for the current repository:
 
 ```text
 src/extension.ts
@@ -89,4 +89,15 @@ src/extension.ts
 
 webview-ui/src/*
 → webview-ui/dist/assets/*
+
+current repository
+→ VS Code Extension Development Host
 ```
+
+If the VS Code CLI has a different name:
+
+```bash
+CODE_COMMAND=code-insiders npm run dev
+```
+
+Use `F5` when you want the normal VS Code debugger workflow instead.
