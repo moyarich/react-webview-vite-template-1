@@ -391,21 +391,37 @@ button {
 }
 ```
 
-VS Code exposes theme values as CSS custom properties.
+VS Code exposes theme values as CSS custom properties, but the React components should not depend on those host variables directly.
 
-Examples include:
+Instead, define app-owned private theme tokens in `index.css`:
 
 ```css
-var(--vscode-editor-background)
-var(--vscode-foreground)
-var(--vscode-descriptionForeground)
-var(--vscode-panel-border)
-var(--vscode-button-background)
-var(--vscode-button-foreground)
-var(--vscode-button-hoverBackground)
+:root {
+  --webview-foreground: var(--vscode-foreground, #1f2328);
+  --webview-background: var(--vscode-editor-background, #ffffff);
+  --webview-panel-border: var(--vscode-panel-border, #d0d7de);
+  --webview-button-background: var(--vscode-button-background, #0969da);
+  --webview-button-foreground: var(--vscode-button-foreground, #ffffff);
+  --webview-button-hover-background: var(
+    --vscode-button-hoverBackground,
+    #0860ca
+  );
+}
 ```
 
-That means we can use Tailwind for spacing and layout while letting VS Code control the colors.
+Each private token has a normal-browser default and optionally reads a VS Code theme variable when the app is running inside a real webview.
+
+The dependency direction is now:
+
+```text
+React components
+→ --webview-* tokens
+→ browser defaults
+
+                    ↘ VS Code may override through --vscode-* variables
+```
+
+This keeps components independent from the host environment and makes browser preview styling deterministic.
 
 ---
 
@@ -428,7 +444,7 @@ export function VSCodeButton({
 }: ButtonHTMLAttributes<HTMLButtonElement>) {
   return (
     <button
-      className={`rounded bg-[var(--vscode-button-background)] px-3 py-2 text-[var(--vscode-button-foreground)] hover:bg-[var(--vscode-button-hoverBackground)] ${className}`}
+      className={`rounded bg-[var(--webview-button-background)] px-3 py-2 text-[var(--webview-button-foreground)] hover:bg-[var(--webview-button-hover-background)] ${className}`}
       {...props}
     />
   );
@@ -436,7 +452,7 @@ export function VSCodeButton({
 
 export function VSCodeCard({ children }: { children: ReactNode }) {
   return (
-    <section className="max-w-xl rounded border border-[var(--vscode-panel-border)] p-5">
+    <section className="max-w-xl rounded border border-[var(--webview-panel-border)] p-5">
       {children}
     </section>
   );
@@ -450,7 +466,7 @@ The only VS Code-specific part is the use of VS Code's CSS variables.
 For example:
 
 ```tsx
-bg-[var(--vscode-button-background)]
+bg-[var(--webview-button-background)]
 ```
 
 This allows the button to follow the user's active VS Code theme.
@@ -552,7 +568,7 @@ export default function App() {
       <VSCodeCard>
         <h1 className="text-xl font-semibold">Hello from React</h1>
 
-        <p className="mt-2 text-[var(--vscode-descriptionForeground)]">
+        <p className="mt-2 text-[var(--webview-description-foreground)]">
           This UI is rendered by React inside a VS Code webview.
         </p>
 
