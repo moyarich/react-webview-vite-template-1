@@ -2,7 +2,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
-    ssr: "src/extension.ts",
+    ssr: "src/extension/extension.ts",
     target: "node22",
     sourcemap: "hidden",
     minify: false,
