@@ -9,12 +9,12 @@
     "noEmit": true
   },
   "include": [
-    "src/webview/**/*.ts",
-    "src/webview/**/*.tsx",
-    "src/webview/**/*.d.ts"
+    "src/webview-ui/**/*.ts",
+    "src/webview-ui/**/*.tsx",
+    "src/webview-ui/**/*.d.ts"
   ],
   "exclude": [
-    "src/extension.ts",
+    "src/extension/**",
     "src/test/**",
     "node_modules",
     "out"
