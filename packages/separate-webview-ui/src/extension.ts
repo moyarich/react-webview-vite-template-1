@@ -11,7 +11,7 @@ export function activate(context: vscode.ExtensionContext) {
       const webviewRoot = vscode.Uri.joinPath(
         context.extensionUri,
         "webview-ui",
-        "dist",
+        "out",
       );
 
       const panel = vscode.window.createWebviewPanel(
