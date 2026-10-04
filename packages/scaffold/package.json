@@ -26,12 +26,14 @@
   "scripts": {
     "vscode:prepublish": "npm run compile",
     "compile": "tsc -p ./",
-    "watch": "tsc -watch -p ./",
+    "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
     "watch:webview": "npm --prefix webview-ui run build -- --watch",
-    "dev": "concurrently \"npm run watch\" \"npm run watch:webview\"",
+    "dev": "npm run dev:preview",
     "pretest": "npm run compile && npm run lint",
     "lint": "eslint src",
-    "test": "vscode-test"
+    "test": "vscode-test",
+    "watch:extension": "tsc -watch -p ./",
+    "dev:preview": "npm --prefix webview-ui run dev"
   },
   "devDependencies": {
     "@types/mocha": "^10.0.10",
