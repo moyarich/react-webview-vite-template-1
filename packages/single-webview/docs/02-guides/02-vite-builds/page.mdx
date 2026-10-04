@@ -38,9 +38,9 @@ build: {
 }
 ```
 
-## Webview configuration
+## Webview UI configuration
 
-`vite.webview.config.ts` builds the browser UI.
+`vite.webview.config.ts` builds the browser-side webview UI.
 
 Important ideas:
 
@@ -52,11 +52,17 @@ Important ideas:
 - IIFE output
 - inline dynamic imports
 
-A predictable output path keeps the extension HTML simple:
+A predictable output path keeps the panel host simple. The host-side code lives in `src/extension/webview-panel/webview-panel.ts` and loads assets from `out/webview-ui`:
 
 ```ts
+const assetRoot = vscode.Uri.joinPath(
+  context.extensionUri,
+  "out",
+  "webview-ui",
+);
+
 const scriptUri = webview.asWebviewUri(
-  vscode.Uri.joinPath(webviewRoot, "webview.js"),
+  vscode.Uri.joinPath(assetRoot, "webview.js"),
 );
 ```
 
@@ -64,7 +70,7 @@ const scriptUri = webview.asWebviewUri(
 
 The runtime requirements are different:
 
-| Extension host | Webview |
+| Extension host | Webview UI |
 | --- | --- |
 | Node.js | Browser |
 | CommonJS output | Browser bundle |
@@ -77,7 +83,7 @@ One build tool is useful. One build configuration would hide important runtime d
 
 The project also uses two TypeScript configurations.
 
-The root `tsconfig.json` handles extension-host code and excludes `src/webview-ui/**`.
+The root `tsconfig.json` handles extension-host code and excludes the browser-side `src/webview-ui/**` source.
 
 `tsconfig.webview.json` includes browser libraries and JSX:
 
