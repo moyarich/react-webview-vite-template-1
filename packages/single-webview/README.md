@@ -33,7 +33,7 @@ To create a new extension from scratch, install the official VS Code extension g
 npm install --global yo generator-code
 ```
 
-The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension/extension.ts`.
+The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension.ts`. We will reorganize the extension host code later.
 
 ---
 
@@ -312,7 +312,7 @@ This build is different from the extension build because it targets a browser in
 It produces:
 
 ```text
-out/webview-ui-ui/
+out/webview-ui/
 ├── webview.js
 └── webview.css
 ```
@@ -860,7 +860,7 @@ A webview cannot load a normal local file path directly.
 This will not work:
 
 ```text
-/Users/me/project/out/webview-ui-ui/webview.js
+/Users/me/project/out/webview-ui/webview.js
 ```
 
 VS Code must convert the extension file into a URL that the isolated webview can access.
@@ -1051,7 +1051,7 @@ Add:
     "src/webview-ui/**/*.d.ts"
   ],
   "exclude": [
-    "src/extension/extension.ts",
+    "src/extension/**",
     "node_modules",
     "out"
   ]
@@ -1194,8 +1194,8 @@ First check that these files exist:
 
 ```text
 out/extension.js
-out/webview-ui-ui/webview.js
-out/webview-ui-ui/webview.css
+out/webview-ui/webview.js
+out/webview-ui/webview.css
 ```
 
 Then open:
