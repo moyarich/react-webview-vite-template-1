@@ -33,7 +33,7 @@ To create a new extension from scratch, install the official VS Code extension g
 npm install --global yo generator-code
 ```
 
-The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension.ts`.
+The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension/extension.ts`.
 
 ---
 
@@ -90,7 +90,7 @@ A VS Code extension with a webview has **two runtimes**.
 Extension host                         Webview
 --------------                         -------
 Node.js                                Browser
-src/extension.ts                       src/webview/*
+src/extension/extension.ts                       src/webview-ui/*
 VS Code API available                  React + DOM available
 No browser DOM                         No direct VS Code API
         │                                  │
@@ -99,7 +99,7 @@ No browser DOM                         No direct VS Code API
 
 ### The extension host
 
-`src/extension.ts` runs in VS Code's extension host.
+`src/extension/extension.ts` runs in VS Code's extension host.
 
 This code can use APIs such as:
 
@@ -182,7 +182,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
-    ssr: "src/extension.ts",
+    ssr: "src/extension/extension.ts",
     target: "node22",
     outDir: "out",
     emptyOutDir: true,
@@ -232,13 +232,13 @@ Update the extension's root `package.json` so VS Code knows where the compiled e
 Create this folder:
 
 ```text
-src/webview/
+src/webview-ui/
 ```
 
 Then create:
 
 ```text
-src/webview/index.tsx
+src/webview-ui/index.tsx
 ```
 
 Add:
@@ -287,12 +287,12 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   build: {
     target: "es2022",
-    outDir: "out/webview",
+    outDir: "out/webview-ui",
     emptyOutDir: false,
     cssCodeSplit: false,
     minify: mode === "production",
     rollupOptions: {
-      input: "src/webview/index.tsx",
+      input: "src/webview-ui/index.tsx",
       output: {
         entryFileNames: "webview.js",
         assetFileNames: (assetInfo) =>
@@ -312,7 +312,7 @@ This build is different from the extension build because it targets a browser in
 It produces:
 
 ```text
-out/webview/
+out/webview-ui-ui/
 ├── webview.js
 └── webview.css
 ```
@@ -364,7 +364,7 @@ out/
 Create:
 
 ```text
-src/webview/index.css
+src/webview-ui/index.css
 ```
 
 Add:
@@ -430,7 +430,7 @@ This keeps components independent from the host environment and makes browser pr
 Create:
 
 ```text
-src/webview/components/vscode-ui.tsx
+src/webview-ui/components/vscode-ui.tsx
 ```
 
 Add:
@@ -488,7 +488,7 @@ This gives the browser a small API for communicating with the extension.
 TypeScript does not know this global exists, so create:
 
 ```text
-src/webview/vscode.d.ts
+src/webview-ui/vscode.d.ts
 ```
 
 Add:
@@ -504,7 +504,7 @@ declare function acquireVsCodeApi(): VSCodeApi;
 Now create:
 
 ```text
-src/webview/api/vscode-api.ts
+src/webview-ui/api/vscode-api.ts
 ```
 
 Add:
@@ -531,7 +531,7 @@ The React app will use this wrapper whenever it needs to send something to the e
 Create:
 
 ```text
-src/webview/App.tsx
+src/webview-ui/App.tsx
 ```
 
 Add:
@@ -700,7 +700,7 @@ The command remains available in the Command Palette too.
 
 ## 14. Create the webview panel
 
-Now replace `src/extension.ts` with:
+Now replace `src/extension/extension.ts` with:
 
 ```ts
 import * as vscode from "vscode";
@@ -846,7 +846,7 @@ A webview should not have unrestricted access to files in your extension.
 We only allow it to load files from:
 
 ```text
-out/webview
+out/webview-ui
 ```
 
 That is where Vite puts the built JavaScript and CSS.
@@ -860,7 +860,7 @@ A webview cannot load a normal local file path directly.
 This will not work:
 
 ```text
-/Users/me/project/out/webview/webview.js
+/Users/me/project/out/webview-ui-ui/webview.js
 ```
 
 VS Code must convert the extension file into a URL that the isolated webview can access.
@@ -1046,12 +1046,12 @@ Add:
     "noEmit": true
   },
   "include": [
-    "src/webview/**/*.ts",
-    "src/webview/**/*.tsx",
-    "src/webview/**/*.d.ts"
+    "src/webview-ui/**/*.ts",
+    "src/webview-ui/**/*.tsx",
+    "src/webview-ui/**/*.d.ts"
   ],
   "exclude": [
-    "src/extension.ts",
+    "src/extension/extension.ts",
     "node_modules",
     "out"
   ]
@@ -1194,8 +1194,8 @@ First check that these files exist:
 
 ```text
 out/extension.js
-out/webview/webview.js
-out/webview/webview.css
+out/webview-ui-ui/webview.js
+out/webview-ui-ui/webview.css
 ```
 
 Then open:
@@ -1217,7 +1217,7 @@ Also confirm:
 enableScripts: true
 ```
 
-and verify that `localResourceRoots` points to `out/webview`.
+and verify that `localResourceRoots` points to `out/webview-ui`.
 
 ---
 
