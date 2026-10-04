@@ -8,13 +8,13 @@ export default defineConfig(({ mode }) => ({
     target: "es2022",
     sourcemap: "hidden",
     minify: mode === "production",
-    outDir: "out/webviews",
+    outDir: "out/webview-ui",
     emptyOutDir: false,
     cssCodeSplit: false,
     rollupOptions: {
       input: {
-        dashboard: "src/webviews/dashboard/index.tsx",
-        settings: "src/webviews/settings/index.tsx",
+        dashboard: "src/webview-ui/dashboard/index.tsx",
+        settings: "src/webview-ui/settings/index.tsx",
       },
       output: {
         entryFileNames: "[name].js",
