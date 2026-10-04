@@ -184,7 +184,7 @@ export default defineConfig({
   build: {
     ssr: "src/extension.ts",
     target: "node22",
-    outDir: "dist",
+    outDir: "out",
     emptyOutDir: true,
     rollupOptions: {
       external: ["vscode"],
@@ -214,14 +214,14 @@ The `vscode` module is provided by VS Code at runtime, so it should not be bundl
 The output will be:
 
 ```text
-dist/extension.js
+out/extension.js
 ```
 
 Update the extension's root `package.json` so VS Code knows where the compiled extension entry point is:
 
 ```json
 {
-  "main": "./dist/extension.js"
+  "main": "./out/extension.js"
 }
 ```
 
@@ -287,7 +287,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   build: {
     target: "es2022",
-    outDir: "dist/webview",
+    outDir: "out/webview",
     emptyOutDir: false,
     cssCodeSplit: false,
     minify: mode === "production",
@@ -312,7 +312,7 @@ This build is different from the extension build because it targets a browser in
 It produces:
 
 ```text
-dist/webview/
+out/webview/
 ├── webview.js
 └── webview.css
 ```
@@ -350,7 +350,7 @@ builds both parts.
 You should see:
 
 ```text
-dist/
+out/
 ├── extension.js
 └── webview/
     ├── webview.js
@@ -717,7 +717,7 @@ export function activate(context: vscode.ExtensionContext) {
       () => {
         const webviewRoot = vscode.Uri.joinPath(
           context.extensionUri,
-          "dist",
+          "out",
           "webview",
         );
 
@@ -763,7 +763,7 @@ function getWebviewHtml(
 ) {
   const webviewRoot = vscode.Uri.joinPath(
     extensionUri,
-    "dist",
+    "out",
     "webview",
   );
 
@@ -846,7 +846,7 @@ A webview should not have unrestricted access to files in your extension.
 We only allow it to load files from:
 
 ```text
-dist/webview
+out/webview
 ```
 
 That is where Vite puts the built JavaScript and CSS.
@@ -860,7 +860,7 @@ A webview cannot load a normal local file path directly.
 This will not work:
 
 ```text
-/Users/me/project/dist/webview/webview.js
+/Users/me/project/out/webview/webview.js
 ```
 
 VS Code must convert the extension file into a URL that the isolated webview can access.
@@ -1053,7 +1053,7 @@ Add:
   "exclude": [
     "src/extension.ts",
     "node_modules",
-    "dist"
+    "out"
   ]
 }
 ```
@@ -1089,7 +1089,7 @@ npm run build
 You should now have:
 
 ```text
-dist/
+out/
 ├── extension.js
 └── webview/
     ├── webview.js
@@ -1193,9 +1193,9 @@ React button
 First check that these files exist:
 
 ```text
-dist/extension.js
-dist/webview/webview.js
-dist/webview/webview.css
+out/extension.js
+out/webview/webview.js
+out/webview/webview.css
 ```
 
 Then open:
@@ -1217,7 +1217,7 @@ Also confirm:
 enableScripts: true
 ```
 
-and verify that `localResourceRoots` points to `dist/webview`.
+and verify that `localResourceRoots` points to `out/webview`.
 
 ---
 
@@ -1244,7 +1244,7 @@ react-webview-vite/
 │       │   └── vscode-api.ts
 │       └── components/
 │           └── vscode-ui.tsx
-└── dist/
+└── out/
     ├── extension.js
     └── webview/
         ├── webview.js
