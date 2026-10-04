@@ -8,7 +8,7 @@ export default defineConfig(({ mode }) => ({
     target: "es2022",
     sourcemap: "hidden",
     minify: mode === "production",
-    outDir: "dist/webview",
+    outDir: "out/webview",
     emptyOutDir: false,
     cssCodeSplit: false,
     rollupOptions: {
