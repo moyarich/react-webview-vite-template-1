@@ -5,50 +5,40 @@ type WebviewMessage = {
   message: string;
 };
 
-export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("react-webview-vite.openPanel", () => {
-      const webviewRoot = vscode.Uri.joinPath(
-        context.extensionUri,
-        "out",
-        "webview",
-      );
-
-      const panel = vscode.window.createWebviewPanel(
-        "reactWebviewVite",
-        "React Webview",
-        vscode.ViewColumn.One,
-        {
-          enableScripts: true,
-          localResourceRoots: [webviewRoot],
-        },
-      );
-
-      panel.webview.html = getWebviewHtml(panel.webview, context.extensionUri);
-
-      panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
-        if (message.type !== "showMessage") {
-          return;
-        }
-
-        void vscode.window.showInformationMessage(message.message);
-
-        await panel.webview.postMessage({
-          type: "messageShown",
-          message: "VS Code received the message.",
-        });
-      });
-    }),
+export function openWebviewPanel(context: vscode.ExtensionContext) {
+  const assetRoot = vscode.Uri.joinPath(
+    context.extensionUri,
+    "out",
+    "webview-ui",
   );
+
+  const panel = vscode.window.createWebviewPanel(
+    "reactWebviewVite",
+    "React Webview",
+    vscode.ViewColumn.One,
+    {
+      enableScripts: true,
+      localResourceRoots: [assetRoot],
+    },
+  );
+
+  panel.webview.html = getWebviewHtml(panel.webview, assetRoot);
+
+  panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+    if (message.type !== "showMessage") {
+      return;
+    }
+
+    void vscode.window.showInformationMessage(message.message);
+
+    await panel.webview.postMessage({
+      type: "messageShown",
+      message: "VS Code received the message.",
+    });
+  });
 }
 
-function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
-  const assetRoot = vscode.Uri.joinPath(
-    extensionUri,
-    "out",
-    "webview",
-  );
-
+function getWebviewHtml(webview: vscode.Webview, assetRoot: vscode.Uri) {
   const scriptUri = webview.asWebviewUri(
     vscode.Uri.joinPath(assetRoot, "webview.js"),
   );
@@ -85,5 +75,3 @@ function getNonce() {
     () => characters[Math.floor(Math.random() * characters.length)],
   ).join("");
 }
-
-export function deactivate() {}

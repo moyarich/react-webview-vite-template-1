@@ -33,7 +33,7 @@ To create a new extension from scratch, install the official VS Code extension g
 npm install --global yo generator-code
 ```
 
-The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension.ts`.
+The generator gives us the basic files VS Code expects, such as `package.json` and `src/extension.ts`. We will reorganize the extension host code later.
 
 ---
 
@@ -87,10 +87,10 @@ Before adding React, it helps to understand where the code will run.
 A VS Code extension with a webview has **two runtimes**.
 
 ```text
-Extension host                         Webview
---------------                         -------
+Extension host                         Webview UI
+--------------                         ----------
 Node.js                                Browser
-src/extension.ts                       src/webview/*
+src/extension/*                        src/webview-ui/*
 VS Code API available                  React + DOM available
 No browser DOM                         No direct VS Code API
         │                                  │
@@ -99,7 +99,7 @@ No browser DOM                         No direct VS Code API
 
 ### The extension host
 
-`src/extension.ts` runs in VS Code's extension host.
+`src/extension/extension.ts` runs in VS Code's extension host.
 
 This code can use APIs such as:
 
@@ -149,8 +149,11 @@ react-webview-vite/
 ├── vite.extension.config.ts
 ├── vite.webview.config.ts
 └── src/
-    ├── extension.ts
-    └── webview/
+    ├── extension/
+    │   ├── extension.ts
+    │   └── webview-panel/
+    │       └── webview-panel.ts
+    └── webview-ui/
         ├── App.tsx
         ├── index.tsx
         ├── index.css
@@ -182,7 +185,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
-    ssr: "src/extension.ts",
+    ssr: "src/extension/extension.ts",
     target: "node22",
     outDir: "out",
     emptyOutDir: true,
@@ -227,18 +230,18 @@ Update the extension's root `package.json` so VS Code knows where the compiled e
 
 ---
 
-## 6. Create the React webview entry point
+## 6. Create the React webview UI entry point
 
 Create this folder:
 
 ```text
-src/webview/
+src/webview-ui/
 ```
 
 Then create:
 
 ```text
-src/webview/index.tsx
+src/webview-ui/index.tsx
 ```
 
 Add:
@@ -268,7 +271,7 @@ React will attach itself to that element.
 
 ---
 
-## 7. Configure Vite for the webview
+## 7. Configure Vite for the webview UI
 
 Create:
 
@@ -287,12 +290,12 @@ export default defineConfig(({ mode }) => ({
   plugins: [react(), tailwindcss()],
   build: {
     target: "es2022",
-    outDir: "out/webview",
+    outDir: "out/webview-ui",
     emptyOutDir: false,
     cssCodeSplit: false,
     minify: mode === "production",
     rollupOptions: {
-      input: "src/webview/index.tsx",
+      input: "src/webview-ui/index.tsx",
       output: {
         entryFileNames: "webview.js",
         assetFileNames: (assetInfo) =>
@@ -312,7 +315,7 @@ This build is different from the extension build because it targets a browser in
 It produces:
 
 ```text
-out/webview/
+out/webview-ui/
 ├── webview.js
 └── webview.css
 ```
@@ -352,7 +355,7 @@ You should see:
 ```text
 out/
 ├── extension.js
-└── webview/
+└── webview-ui/
     ├── webview.js
     └── webview.css
 ```
@@ -364,7 +367,7 @@ out/
 Create:
 
 ```text
-src/webview/index.css
+src/webview-ui/index.css
 ```
 
 Add:
@@ -430,7 +433,7 @@ This keeps components independent from the host environment and makes browser pr
 Create:
 
 ```text
-src/webview/components/vscode-ui.tsx
+src/webview-ui/components/vscode-ui.tsx
 ```
 
 Add:
@@ -488,7 +491,7 @@ This gives the browser a small API for communicating with the extension.
 TypeScript does not know this global exists, so create:
 
 ```text
-src/webview/vscode.d.ts
+src/webview-ui/vscode.d.ts
 ```
 
 Add:
@@ -504,7 +507,7 @@ declare function acquireVsCodeApi(): VSCodeApi;
 Now create:
 
 ```text
-src/webview/api/vscode-api.ts
+src/webview-ui/api/vscode-api.ts
 ```
 
 Add:
@@ -531,7 +534,7 @@ The React app will use this wrapper whenever it needs to send something to the e
 Create:
 
 ```text
-src/webview/App.tsx
+src/webview-ui/App.tsx
 ```
 
 Add:
@@ -698,9 +701,40 @@ The command remains available in the Command Palette too.
 
 ---
 
-## 14. Create the webview panel
+## 14. Create the webview panel host
 
-Now replace `src/extension.ts` with:
+The extension entry and the panel host have different responsibilities, so keep them separate.
+
+Create:
+
+```text
+src/extension/extension.ts
+```
+
+Add:
+
+```ts
+import * as vscode from "vscode";
+import { openWebviewPanel } from "./webview-panel/webview-panel";
+
+export function activate(context: vscode.ExtensionContext) {
+  context.subscriptions.push(
+    vscode.commands.registerCommand("react-webview-vite.openPanel", () => {
+      openWebviewPanel(context);
+    }),
+  );
+}
+
+export function deactivate() {}
+```
+
+Then create:
+
+```text
+src/extension/webview-panel/webview-panel.ts
+```
+
+This file owns the VS Code `WebviewPanel`, its HTML, resource roots, CSP, and messaging:
 
 ```ts
 import * as vscode from "vscode";
@@ -710,81 +744,53 @@ type WebviewMessage = {
   message: string;
 };
 
-export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand(
-      "react-webview-vite.openPanel",
-      () => {
-        const webviewRoot = vscode.Uri.joinPath(
-          context.extensionUri,
-          "out",
-          "webview",
-        );
-
-        const panel = vscode.window.createWebviewPanel(
-          "reactWebviewVite",
-          "React Webview",
-          vscode.ViewColumn.One,
-          {
-            enableScripts: true,
-            localResourceRoots: [webviewRoot],
-          },
-        );
-
-        panel.webview.html = getWebviewHtml(
-          panel.webview,
-          context.extensionUri,
-        );
-
-        panel.webview.onDidReceiveMessage(
-          async (message: WebviewMessage) => {
-            if (message.type !== "showMessage") {
-              return;
-            }
-
-            await vscode.window.showInformationMessage(
-              message.message,
-            );
-
-            await panel.webview.postMessage({
-              type: "messageShown",
-              message: "VS Code received the message.",
-            });
-          },
-        );
-      },
-    ),
+export function openWebviewPanel(context: vscode.ExtensionContext) {
+  const assetRoot = vscode.Uri.joinPath(
+    context.extensionUri,
+    "out",
+    "webview-ui",
   );
+
+  const panel = vscode.window.createWebviewPanel(
+    "reactWebviewVite",
+    "React Webview",
+    vscode.ViewColumn.One,
+    {
+      enableScripts: true,
+      localResourceRoots: [assetRoot],
+    },
+  );
+
+  panel.webview.html = getWebviewHtml(panel.webview, assetRoot);
+
+  panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+    if (message.type !== "showMessage") {
+      return;
+    }
+
+    void vscode.window.showInformationMessage(message.message);
+
+    await panel.webview.postMessage({
+      type: "messageShown",
+      message: "VS Code received the message.",
+    });
+  });
 }
 
-function getWebviewHtml(
-  webview: vscode.Webview,
-  extensionUri: vscode.Uri,
-) {
-  const webviewRoot = vscode.Uri.joinPath(
-    extensionUri,
-    "out",
-    "webview",
-  );
-
+function getWebviewHtml(webview: vscode.Webview, assetRoot: vscode.Uri) {
   const scriptUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(webviewRoot, "webview.js"),
+    vscode.Uri.joinPath(assetRoot, "webview.js"),
   );
-
   const styleUri = webview.asWebviewUri(
-    vscode.Uri.joinPath(webviewRoot, "webview.css"),
+    vscode.Uri.joinPath(assetRoot, "webview.css"),
   );
-
   const nonce = getNonce();
 
   return /* html */ `<!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta
-      name="viewport"
-      content="width=device-width, initial-scale=1.0"
-    />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
       content="default-src 'none'; style-src ${webview.cspSource}; script-src 'nonce-${nonce}';"
@@ -805,17 +811,18 @@ function getNonce() {
 
   return Array.from(
     { length: 32 },
-    () =>
-      characters[
-        Math.floor(Math.random() * characters.length)
-      ],
+    () => characters[Math.floor(Math.random() * characters.length)],
   ).join("");
 }
-
-export function deactivate() {}
 ```
 
-There is a lot here, so let's break it down.
+The source/output relationship is now explicit:
+
+```text
+src/extension/webview-panel/   → VS Code panel host code
+src/webview-ui/                → React/browser source
+out/webview-ui/                → built browser assets
+```
 
 ---
 
@@ -846,7 +853,7 @@ A webview should not have unrestricted access to files in your extension.
 We only allow it to load files from:
 
 ```text
-out/webview
+out/webview-ui
 ```
 
 That is where Vite puts the built JavaScript and CSS.
@@ -860,7 +867,7 @@ A webview cannot load a normal local file path directly.
 This will not work:
 
 ```text
-/Users/me/project/out/webview/webview.js
+/Users/me/project/out/webview-ui/webview.js
 ```
 
 VS Code must convert the extension file into a URL that the isolated webview can access.
@@ -1046,19 +1053,19 @@ Add:
     "noEmit": true
   },
   "include": [
-    "src/webview/**/*.ts",
-    "src/webview/**/*.tsx",
-    "src/webview/**/*.d.ts"
+    "src/webview-ui/**/*.ts",
+    "src/webview-ui/**/*.tsx",
+    "src/webview-ui/**/*.d.ts"
   ],
   "exclude": [
-    "src/extension.ts",
+    "src/extension/**",
     "node_modules",
     "out"
   ]
 }
 ```
 
-Your root `tsconfig.json` should exclude the webview source so the extension config does not treat browser code like Node code.
+Your root `tsconfig.json` should exclude the webview UI source so the extension config does not treat browser code like Node code.
 
 Then add:
 
@@ -1194,8 +1201,8 @@ First check that these files exist:
 
 ```text
 out/extension.js
-out/webview/webview.js
-out/webview/webview.css
+out/webview-ui/webview.js
+out/webview-ui/webview.css
 ```
 
 Then open:
@@ -1217,7 +1224,7 @@ Also confirm:
 enableScripts: true
 ```
 
-and verify that `localResourceRoots` points to `out/webview`.
+and verify that `localResourceRoots` points to `out/webview-ui`.
 
 ---
 
@@ -1234,8 +1241,11 @@ react-webview-vite/
 ├── vite.extension.config.ts
 ├── vite.webview.config.ts
 ├── src/
-│   ├── extension.ts
-│   └── webview/
+│   ├── extension/
+│   │   ├── extension.ts
+│   │   └── webview-panel/
+│   │       └── webview-panel.ts
+│   └── webview-ui/
 │       ├── App.tsx
 │       ├── index.tsx
 │       ├── index.css
@@ -1246,7 +1256,7 @@ react-webview-vite/
 │           └── vscode-ui.tsx
 └── out/
     ├── extension.js
-    └── webview/
+    └── webview-ui/
         ├── webview.js
         └── webview.css
 ```

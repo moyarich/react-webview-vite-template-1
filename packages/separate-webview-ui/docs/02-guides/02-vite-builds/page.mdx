@@ -18,7 +18,7 @@ vite.extension.config.ts
 builds:
 
 ```text
-src/extension.ts
+src/extension/extension.ts
 → out/extension.js
 ```
 
@@ -33,7 +33,7 @@ A simplified configuration:
 
 ```ts
 build: {
-  ssr: "src/extension.ts",
+  ssr: "src/extension/extension.ts",
   target: "node22",
   outDir: "out",
   rollupOptions: {

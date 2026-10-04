@@ -5,41 +5,37 @@ type WebviewMessage = {
   message: string;
 };
 
-export function activate(context: vscode.ExtensionContext) {
-  context.subscriptions.push(
-    vscode.commands.registerCommand("react-webview-vite.openPanel", () => {
-      const webviewRoot = vscode.Uri.joinPath(
-        context.extensionUri,
-        "webview-ui",
-        "out",
-      );
-
-      const panel = vscode.window.createWebviewPanel(
-        "reactWebviewVite",
-        "React Webview",
-        vscode.ViewColumn.One,
-        {
-          enableScripts: true,
-          localResourceRoots: [webviewRoot],
-        },
-      );
-
-      panel.webview.html = getWebviewHtml(panel.webview, webviewRoot);
-
-      panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
-        if (message.type !== "showMessage") {
-          return;
-        }
-
-        void vscode.window.showInformationMessage(message.message);
-
-        await panel.webview.postMessage({
-          type: "messageShown",
-          message: "VS Code received the message.",
-        });
-      });
-    }),
+export function openWebviewPanel(context: vscode.ExtensionContext) {
+  const webviewRoot = vscode.Uri.joinPath(
+    context.extensionUri,
+    "webview-ui",
+    "out",
   );
+
+  const panel = vscode.window.createWebviewPanel(
+    "reactWebviewVite",
+    "React Webview",
+    vscode.ViewColumn.One,
+    {
+      enableScripts: true,
+      localResourceRoots: [webviewRoot],
+    },
+  );
+
+  panel.webview.html = getWebviewHtml(panel.webview, webviewRoot);
+
+  panel.webview.onDidReceiveMessage(async (message: WebviewMessage) => {
+    if (message.type !== "showMessage") {
+      return;
+    }
+
+    void vscode.window.showInformationMessage(message.message);
+
+    await panel.webview.postMessage({
+      type: "messageShown",
+      message: "VS Code received the message.",
+    });
+  });
 }
 
 function getWebviewHtml(webview: vscode.Webview, webviewRoot: vscode.Uri) {
@@ -79,5 +75,3 @@ function getNonce() {
     () => characters[Math.floor(Math.random() * characters.length)],
   ).join("");
 }
-
-export function deactivate() {}

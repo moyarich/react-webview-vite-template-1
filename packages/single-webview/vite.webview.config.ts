@@ -8,11 +8,11 @@ export default defineConfig(({ mode }) => ({
     target: "es2022",
     sourcemap: "hidden",
     minify: mode === "production",
-    outDir: "out/webview",
+    outDir: "out/webview-ui",
     emptyOutDir: false,
     cssCodeSplit: false,
     rollupOptions: {
-      input: "src/webview/index.tsx",
+      input: "src/webview-ui/index.tsx",
       output: {
         entryFileNames: "webview.js",
         assetFileNames: (assetInfo) =>

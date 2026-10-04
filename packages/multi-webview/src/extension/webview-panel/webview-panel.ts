@@ -32,7 +32,7 @@ export function openWebviewPanel(
   const assetRoot = vscode.Uri.joinPath(
     context.extensionUri,
     "out",
-    "webviews",
+    "webview-ui",
   );
 
   const panel = vscode.window.createWebviewPanel(

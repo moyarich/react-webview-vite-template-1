@@ -41,13 +41,13 @@ The extension and all webviews stay in one npm package.
 
 ```text
 src/
-├── extension.ts
 ├── extension/
-│   └── webviews/
-│       └── openWebviewPanel.ts
+│   ├── extension.ts
+│   └── webview-panel/
+│       └── webview-panel.ts
 ├── shared/
 │   └── messages.ts
-└── webviews/
+└── webview-ui/
     ├── dashboard/
     │   ├── App.tsx
     │   ├── dashboard.css
@@ -75,8 +75,8 @@ src/
 ```ts
 rollupOptions: {
   input: {
-    dashboard: "src/webviews/dashboard/index.tsx",
-    settings: "src/webviews/settings/index.tsx",
+    dashboard: "src/webview-ui/dashboard/index.tsx",
+    settings: "src/webview-ui/settings/index.tsx",
   },
 }
 ```
@@ -84,7 +84,7 @@ rollupOptions: {
 The build produces separate entry bundles plus shared chunks:
 
 ```text
-out/webviews/
+out/webview-ui/
 ├── dashboard.js
 ├── settings.js
 ├── webview.css
@@ -173,7 +173,7 @@ Each webview composes the style layers it needs.
 Shared styles live under:
 
 ```text
-src/webviews/shared/styles/
+src/webview-ui/shared/styles/
 ├── tokens.css
 └── base.css
 ```
@@ -185,8 +185,8 @@ src/webviews/shared/styles/
 A webview can add its own stylesheet beside its React entry:
 
 ```text
-src/webviews/dashboard/dashboard.css
-src/webviews/settings/settings.css
+src/webview-ui/dashboard/dashboard.css
+src/webview-ui/settings/settings.css
 ```
 
 Dashboard composes both layers explicitly:
@@ -291,7 +291,7 @@ for the Extension Development Host only.
 
 For a new `inspector` webview:
 
-1. Create `src/webviews/inspector/App.tsx` and `index.tsx`.
+1. Create `src/webview-ui/inspector/App.tsx` and `index.tsx`.
 2. Add `inspector` to `WebviewId`.
 3. Add an `inspector` Vite input.
 4. Add its definition to `WEBVIEWS`.

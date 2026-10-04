@@ -12,7 +12,7 @@ The extension and webviews target different runtimes, so they use separate Vite 
 `vite.extension.config.ts` builds:
 
 ```text
-src/extension.ts
+src/extension/extension.ts
 → out/extension.js
 ```
 
@@ -25,8 +25,8 @@ The `vscode` module remains external because VS Code provides it at runtime.
 ```ts
 rollupOptions: {
   input: {
-    dashboard: "src/webviews/dashboard/index.tsx",
-    settings: "src/webviews/settings/index.tsx",
+    dashboard: "src/webview-ui/dashboard/index.tsx",
+    settings: "src/webview-ui/settings/index.tsx",
   },
 }
 ```
@@ -34,7 +34,7 @@ rollupOptions: {
 Output:
 
 ```text
-out/webviews/
+out/webview-ui/
 ├── dashboard.js
 ├── settings.js
 ├── webview.css
@@ -52,6 +52,6 @@ A single multi-entry build lets them share dependencies and infrastructure witho
 
 ## TypeScript boundaries
 
-The root `tsconfig.json` excludes `src/webviews/**`.
+The root `tsconfig.json` excludes `src/webview-ui/**`.
 
 `tsconfig.webview.json` includes browser libraries, JSX, the webview sources, and the runtime-neutral message contracts in `src/shared/**`.
