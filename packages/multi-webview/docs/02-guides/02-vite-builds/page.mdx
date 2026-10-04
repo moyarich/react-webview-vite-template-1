@@ -13,7 +13,7 @@ The extension and webviews target different runtimes, so they use separate Vite 
 
 ```text
 src/extension.ts
-→ dist/extension.js
+→ out/extension.js
 ```
 
 The `vscode` module remains external because VS Code provides it at runtime.
@@ -34,7 +34,7 @@ rollupOptions: {
 Output:
 
 ```text
-dist/webviews/
+out/webviews/
 ├── dashboard.js
 ├── settings.js
 ├── webview.css
