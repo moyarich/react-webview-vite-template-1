@@ -17,6 +17,6 @@
     "src/extension.ts",
     "src/test/**",
     "node_modules",
-    "dist"
+    "out"
   ]
 }
