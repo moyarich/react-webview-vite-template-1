@@ -84,7 +84,7 @@ rollupOptions: {
 The build produces separate entry bundles plus shared chunks:
 
 ```text
-dist/webviews/
+out/webviews/
 ├── dashboard.js
 ├── settings.js
 ├── webview.css

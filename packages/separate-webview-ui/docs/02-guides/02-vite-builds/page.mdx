@@ -19,7 +19,7 @@ builds:
 
 ```text
 src/extension.ts
-→ dist/extension.js
+→ out/extension.js
 ```
 
 Important settings:
@@ -35,7 +35,7 @@ A simplified configuration:
 build: {
   ssr: "src/extension.ts",
   target: "node22",
-  outDir: "dist",
+  outDir: "out",
   rollupOptions: {
     external: ["vscode"],
     output: {
@@ -58,7 +58,7 @@ builds the React browser app:
 
 ```text
 webview-ui/src/*
-→ webview-ui/dist/*
+→ webview-ui/out/*
 ```
 
 The config uses:
@@ -77,8 +77,8 @@ assetFileNames: "assets/[name].[ext]"
 That gives the extension stable paths:
 
 ```text
-webview-ui/dist/assets/index.js
-webview-ui/dist/assets/index.css
+webview-ui/out/assets/index.js
+webview-ui/out/assets/index.css
 ```
 
 ## Why not one Vite config?

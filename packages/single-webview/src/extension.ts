@@ -10,7 +10,7 @@ export function activate(context: vscode.ExtensionContext) {
     vscode.commands.registerCommand("react-webview-vite.openPanel", () => {
       const webviewRoot = vscode.Uri.joinPath(
         context.extensionUri,
-        "dist",
+        "out",
         "webview",
       );
 
@@ -45,7 +45,7 @@ export function activate(context: vscode.ExtensionContext) {
 function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
   const assetRoot = vscode.Uri.joinPath(
     extensionUri,
-    "dist",
+    "out",
     "webview",
   );
 

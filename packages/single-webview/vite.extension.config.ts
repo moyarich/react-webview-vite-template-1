@@ -6,7 +6,7 @@ export default defineConfig({
     target: "node22",
     sourcemap: "hidden",
     minify: false,
-    outDir: "dist",
+    outDir: "out",
     emptyOutDir: true,
     rollupOptions: {
       external: ["vscode"],

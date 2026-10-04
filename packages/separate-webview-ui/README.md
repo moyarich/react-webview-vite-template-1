@@ -199,7 +199,7 @@ export default defineConfig({
     target: "node22",
     sourcemap: "hidden",
     minify: false,
-    outDir: "dist",
+    outDir: "out",
     emptyOutDir: true,
     rollupOptions: {
       external: ["vscode"],
@@ -229,14 +229,14 @@ VS Code provides the `vscode` module at runtime, so it should not be bundled.
 The extension build produces:
 
 ```text
-dist/extension.js
+out/extension.js
 ```
 
 Update the root `package.json` so VS Code loads that file:
 
 ```json
 {
-  "main": "./dist/extension.js"
+  "main": "./out/extension.js"
 }
 ```
 
@@ -297,7 +297,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: "dist",
+    outDir: "out",
     emptyOutDir: true,
     rollupOptions: {
       output: {
@@ -315,7 +315,7 @@ The important part is the predictable output names.
 After the build, we want:
 
 ```text
-webview-ui/dist/
+webview-ui/out/
 ├── index.html
 └── assets/
     ├── index.js
@@ -720,7 +720,7 @@ export function activate(context: vscode.ExtensionContext) {
       const webviewRoot = vscode.Uri.joinPath(
         context.extensionUri,
         "webview-ui",
-        "dist",
+        "out",
       );
 
       const panel = vscode.window.createWebviewPanel(
@@ -783,7 +783,7 @@ The webview should only be able to load the local files it actually needs.
 We allow:
 
 ```text
-webview-ui/dist
+webview-ui/out
 ```
 
 because that is where Vite writes the browser bundle.
@@ -797,7 +797,7 @@ A webview cannot load an ordinary filesystem path directly.
 For example, this is not a valid browser URL inside the webview:
 
 ```text
-/Users/me/project/webview-ui/dist/assets/index.js
+/Users/me/project/webview-ui/out/assets/index.js
 ```
 
 VS Code converts extension files into safe webview URLs with:
@@ -1004,14 +1004,14 @@ Update the root `tsconfig.json` so it excludes the nested frontend:
     "skipLibCheck": true
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["webview-ui", "node_modules", "dist"]
+  "exclude": ["webview-ui", "node_modules", "out"]
 }
 ```
 
 The key line is:
 
 ```json
-"exclude": ["webview-ui", "node_modules", "dist"]
+"exclude": ["webview-ui", "node_modules", "out"]
 ```
 
 The extension TypeScript environment should not try to compile browser/React source.
@@ -1033,10 +1033,10 @@ The root script runs both builds.
 You should now have:
 
 ```text
-dist/
+out/
 └── extension.js
 
-webview-ui/dist/
+webview-ui/out/
 ├── index.html
 └── assets/
     ├── index.js
@@ -1116,12 +1116,12 @@ The first time it starts, `predev` runs a complete build. Then `dev` starts thre
 extension watcher
 src/extension.ts
     ↓ Vite watch
-dist/extension.js
+out/extension.js
 
 webview watcher
 webview-ui/src/*
     ↓ Vite watch
-webview-ui/dist/assets/*
+webview-ui/out/assets/*
 
 VS Code
     ↓
@@ -1164,9 +1164,9 @@ Then reopen the webview.
 Check that these files exist:
 
 ```text
-dist/extension.js
-webview-ui/dist/assets/index.js
-webview-ui/dist/assets/index.css
+out/extension.js
+webview-ui/out/assets/index.js
+webview-ui/out/assets/index.css
 ```
 
 Then open:
@@ -1216,7 +1216,7 @@ localResourceRoots: [webviewRoot]
 points to:
 
 ```text
-webview-ui/dist
+webview-ui/out
 ```
 
 and that the extension uses `webview.asWebviewUri(...)`.
@@ -1233,7 +1233,7 @@ react-webview-vite/
 ├── package-lock.json
 ├── tsconfig.json
 ├── vite.extension.config.ts
-├── dist/
+├── out/
 │   └── extension.js
 ├── src/
 │   └── extension.ts
@@ -1254,7 +1254,7 @@ react-webview-vite/
     │   │   └── vscode-api.ts
     │   └── components/
     │       └── vscode-ui.tsx
-    └── dist/
+    └── out/
         ├── index.html
         └── assets/
             ├── index.js

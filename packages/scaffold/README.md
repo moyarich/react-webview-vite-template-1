@@ -157,7 +157,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   build: {
-    outDir: "dist",
+    outDir: "out",
     emptyOutDir: true,
     rollupOptions: {
       output: {
@@ -646,7 +646,7 @@ npm run build
 Vite creates:
 
 ```text
-webview-ui/dist/
+webview-ui/out/
   index.html
   assets/
     index.js
@@ -714,7 +714,7 @@ export function activate(context: vscode.ExtensionContext) {
         {
           enableScripts: true,
           localResourceRoots: [
-            vscode.Uri.joinPath(context.extensionUri, "webview-ui", "dist"),
+            vscode.Uri.joinPath(context.extensionUri, "webview-ui", "out"),
           ],
         },
       );
@@ -773,7 +773,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
     vscode.Uri.joinPath(
       extensionUri,
       "webview-ui",
-      "dist",
+      "out",
       "assets",
       "index.js",
     ),
@@ -783,7 +783,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
     vscode.Uri.joinPath(
       extensionUri,
       "webview-ui",
-      "dist",
+      "out",
       "assets",
       "index.css",
     ),
@@ -832,10 +832,10 @@ export function deactivate() {}
 Important details:
 
 - `enableScripts: true` allows the React bundle to run.
-- `localResourceRoots` allows the webview to read files from `webview-ui/dist`.
+- `localResourceRoots` allows the webview to read files from `webview-ui/out`.
 - `webview.asWebviewUri(...)` converts extension file paths into safe webview URLs.
 - `context.extensionUri` points to the extension root folder, not the `out/` folder.
-- The compiled extension runs from `out/extension.js`, but it can still reference `webview-ui/dist/assets/index.js` relative to the extension root.
+- The compiled extension runs from `out/extension.js`, but it can still reference `webview-ui/out/assets/index.js` relative to the extension root.
 - The CSP uses a `nonce` so only the intended script can run.
 
 ---
@@ -854,7 +854,7 @@ You need both because they build different parts of the project:
 
 ```text
 Extension watcher → compiles src/extension.ts into out/extension.js
-Webview watcher   → builds React/Tailwind files into webview-ui/dist/
+Webview watcher   → builds React/Tailwind files into webview-ui/out/
 ```
 
 Use `concurrently` because both watcher commands are long-running processes.
@@ -887,8 +887,8 @@ This keeps both outputs updated while you work:
 
 ```text
 out/extension.js
-webview-ui/dist/assets/index.js
-webview-ui/dist/assets/index.css
+webview-ui/out/assets/index.js
+webview-ui/out/assets/index.css
 ```
 
 ---
@@ -967,8 +967,8 @@ Before running the extension, confirm these files exist:
 
 ```text
 out/extension.js
-webview-ui/dist/assets/index.js
-webview-ui/dist/assets/index.css
+webview-ui/out/assets/index.js
+webview-ui/out/assets/index.css
 ```
 
 Also confirm the command ID matches in both places:
@@ -1005,7 +1005,7 @@ react-webview-vite/
       App.tsx
       main.tsx
       index.css
-    dist/
+    out/
       assets/
         index.js
         index.css

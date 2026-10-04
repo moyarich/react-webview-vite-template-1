@@ -17,7 +17,7 @@ Important ideas:
 - target: Node
 - output: CommonJS
 - external module: `vscode`
-- output file: `dist/extension.js`
+- output file: `out/extension.js`
 
 The `vscode` module stays external because VS Code provides it at runtime.
 
@@ -27,7 +27,7 @@ A simplified configuration looks like:
 build: {
   ssr: "src/extension.ts",
   target: "node22",
-  outDir: "dist",
+  outDir: "out",
   rollupOptions: {
     external: ["vscode"],
     output: {
@@ -46,7 +46,7 @@ Important ideas:
 
 - entry: `src/webview/index.tsx`
 - plugins: React and Tailwind
-- output: `dist/webview`
+- output: `out/webview`
 - predictable JS name: `webview.js`
 - predictable CSS name: `webview.css`
 - IIFE output

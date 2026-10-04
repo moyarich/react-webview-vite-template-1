@@ -10,7 +10,7 @@
     "Other"
   ],
   "activationEvents": [],
-  "main": "./dist/extension.js",
+  "main": "./out/extension.js",
   "contributes": {
     "commands": [
       {
@@ -61,7 +61,7 @@
     "watch": "concurrently -k -n extension,webview \"npm run watch:extension\" \"npm run watch:webview\"",
     "watch:extension": "vite build --watch --mode development --config vite.extension.config.ts",
     "watch:webview": "vite build --watch --mode development --config vite.webview.config.ts",
-    "dev": "concurrently -k -n extension,webview,preview,vscode \"npm run watch:extension\" \"npm run watch:webview\" \"npm run dev:preview\" \"npm run dev:extension\"",
+    "dev": "npm run dev:preview",
     "dev:preview": "vite --config vite.webview.config.ts --host 127.0.0.1 --open /previews/dashboard.html",
     "dev:extension": "node ./scripts/run-extension-dev.mjs",
     "typecheck": "tsc --noEmit && tsc --noEmit --project tsconfig.webview.json",

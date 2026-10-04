@@ -27,7 +27,7 @@ export function activate(context: vscode.ExtensionContext) {
         {
           enableScripts: true,
           localResourceRoots: [
-            vscode.Uri.joinPath(context.extensionUri, "webview-ui", "dist"),
+            vscode.Uri.joinPath(context.extensionUri, "webview-ui", "out"),
           ],
         },
       );
@@ -86,7 +86,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
     vscode.Uri.joinPath(
       extensionUri,
       "webview-ui",
-      "dist",
+      "out",
       "assets",
       "index.js",
     ),
@@ -96,7 +96,7 @@ function getWebviewHtml(webview: vscode.Webview, extensionUri: vscode.Uri) {
     vscode.Uri.joinPath(
       extensionUri,
       "webview-ui",
-      "dist",
+      "out",
       "assets",
       "index.css",
     ),
