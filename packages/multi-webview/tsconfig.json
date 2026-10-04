@@ -14,7 +14,7 @@
     "src/**/*.ts"
   ],
   "exclude": [
-    "src/webviews/**",
+    "src/webview-ui/**",
     "node_modules",
     "out"
   ]
