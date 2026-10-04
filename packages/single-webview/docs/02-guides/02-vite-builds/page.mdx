@@ -13,7 +13,7 @@ The project uses Vite for both runtimes, but each runtime needs a different conf
 
 Important ideas:
 
-- entry: `src/extension.ts`
+- entry: `src/extension/extension.ts`
 - target: Node
 - output: CommonJS
 - external module: `vscode`
@@ -25,7 +25,7 @@ A simplified configuration looks like:
 
 ```ts
 build: {
-  ssr: "src/extension.ts",
+  ssr: "src/extension/extension.ts",
   target: "node22",
   outDir: "out",
   rollupOptions: {
@@ -44,9 +44,9 @@ build: {
 
 Important ideas:
 
-- entry: `src/webview/index.tsx`
+- entry: `src/webview-ui/index.tsx`
 - plugins: React and Tailwind
-- output: `out/webview`
+- output: `out/webview-ui`
 - predictable JS name: `webview.js`
 - predictable CSS name: `webview.css`
 - IIFE output
@@ -77,7 +77,7 @@ One build tool is useful. One build configuration would hide important runtime d
 
 The project also uses two TypeScript configurations.
 
-The root `tsconfig.json` handles extension-host code and excludes `src/webview/**`.
+The root `tsconfig.json` handles extension-host code and excludes `src/webview-ui/**`.
 
 `tsconfig.webview.json` includes browser libraries and JSX:
 
