@@ -100,7 +100,7 @@ A VS Code extension with a webview has **two runtimes**:
 Extension host                         Webview
 --------------                         -------
 Node.js                                Browser
-src/extension.ts                       webview-ui/src/*
+src/extension/extension.ts                       webview-ui/src/*
 VS Code API available                  React + DOM available
 No browser DOM                         No direct VS Code API
         │                                  │
@@ -195,7 +195,7 @@ import { defineConfig } from "vite";
 
 export default defineConfig({
   build: {
-    ssr: "src/extension.ts",
+    ssr: "src/extension/extension.ts",
     target: "node22",
     sourcemap: "hidden",
     minify: false,
@@ -637,7 +637,7 @@ The command ID is:
 react-webview-vite.openPanel
 ```
 
-We will use that exact ID again in `src/extension.ts`.
+We will use that exact ID again in `src/extension/extension.ts`.
 
 Declaring a command makes it available to VS Code, including the Command Palette. We can also surface it in the editor UI.
 
@@ -701,7 +701,7 @@ The same command is still available from the Command Palette.
 Replace:
 
 ```text
-src/extension.ts
+src/extension/extension.ts
 ```
 
 with:
@@ -1114,7 +1114,7 @@ The first time it starts, `predev` runs a complete build. Then `dev` starts thre
 
 ```text
 extension watcher
-src/extension.ts
+src/extension/extension.ts
     ↓ Vite watch
 out/extension.js
 
@@ -1194,7 +1194,7 @@ matches in both:
 
 ```text
 package.json
-src/extension.ts
+src/extension/extension.ts
 ```
 
 ### React cannot import `vscode`
